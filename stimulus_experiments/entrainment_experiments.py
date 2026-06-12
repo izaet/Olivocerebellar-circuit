@@ -238,7 +238,19 @@ def run_test(config):
 
 
             
+def run_training_commands(ISI_values = np.linspace(20, 200, 4), n_seeds = 4):
+    seedlist = np.arange(88, 88+ n_seeds)
+    for ISI in ISI_values:
+        for seed in seedlist:
+            print(f'python3 main_entrain.py --run-type train --PFPC_plasticity-on True --OU-stim-isi-mean{ISI} --seed {seed}')
+        
 
+
+def run_baseline_commands(n_seeds=4):
+    seedlist = np.arange(88, 88+ n_seeds)
+    for seed in seedlist:
+        print(f'python3 main_entrain.py --experiment nostim --run-type train --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False --seed {seed}')
+   
     
         
 

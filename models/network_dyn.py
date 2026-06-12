@@ -852,9 +852,9 @@ class CerebellarNetwork(bp.DynSysGroup):
             "gamma_PC": kwargs.get("PCCN_gamma_PC", 0.004),
         }
         cnio_params = {
-            "delay": kwargs.get("CNIO_delay", 5.0), 
+            "delay": kwargs.get("CNIO_delay", 50.0),
             "tau_inhib": kwargs.get("CNIO_tau_inhib", 30.0),
-            "gamma_CN_IO": kwargs.get("CNIO_gamma_CN_IO", -0.02),
+            "gamma_CN_IO": kwargs.get("CNIO_gamma_CN_IO", -1.8),
         }
         iopc_params = {
             "delay": kwargs.get("IOPC_delay", 15.0),
