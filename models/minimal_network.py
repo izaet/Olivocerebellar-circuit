@@ -1,6 +1,6 @@
 import sys
 
-sys.path.append('/cerebellum-jax-main')
+sys.path.append('C:/Users/HP/ModellingProjects/Olivocerebellar-circuit')
 
 
 import warnings

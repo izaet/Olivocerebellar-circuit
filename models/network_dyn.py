@@ -1,7 +1,6 @@
 import sys
 
-sys.path.append('C:/Users/HP/PycharmProjects/Internproject 2025/cerebellum-jax-main')
-
+sys.path.append('C:/Users/HP/ModellingProjects/Olivocerebellar-circuit')
 
 import warnings
 import numpy as np
@@ -11,7 +10,7 @@ import jax
 
 from models.cells.pc import PurkinjeCell
 from models.cells.dcn import DeepCerebellarNuclei
-from models.cells.io_clust import IONetwork
+from models.cells.io import IONetwork
 from models.half_wave_stim import HalfWaveStimIOPF
 
 

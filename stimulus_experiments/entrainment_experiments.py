@@ -15,8 +15,7 @@ import itertools
 import json
 import brainpy.checkpoints as bc
 
-sys.path.append('C:/Users/HP/PycharmProjects/Internproject 2025/cerebellum-jax-main')
-
+sys.path.append('C:/Users/HP/ModellingProjects/Olivocerebellar-circuit')
 from models.setup_net_run import *
 
 

@@ -1,7 +1,6 @@
 import sys
 
-sys.path.append('C:/Users/HP/PycharmProjects/Internproject 2025/cerebellum-jax-main')
-
+sys.path.append('C:/Users/HP/ModellingProjects/Olivocerebellar-circuit')
 
 import warnings
 import numpy as np

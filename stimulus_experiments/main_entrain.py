@@ -4,8 +4,8 @@ import os
 import time
 from pathlib import Path
 
-sys.path.append('C:/Users/HP/PycharmProjects/Internproject 2025/cerebellum-jax-main')
-sys.path.append('/home/izet/cerebellum-jax-main')
+
+sys.path.append('C:/Users/HP/ModellingProjects/Olivocerebellar-circuit')
 
 from experiments_analysis.entrainment_experiments import (
     run_train,

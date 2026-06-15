@@ -14,7 +14,7 @@ import importlib
 import itertools
 import json
 
-sys.path.append('C:/Users/HP/PycharmProjects/Internproject 2025/cerebellum-jax-main')
+sys.path.append('C:/Users/HP/ModellingProjects/Olivocerebellar-circuit')
 
 # Figure 2DEF
 def figure_2DEF(seed, mon, save_dir, save= False,  threshold = 2, xrange = [30_000, 50_000]):
