@@ -252,7 +252,7 @@ def baseline_commands(parent_dir, n_seeds=4, simdur= 10_000, experiment = "nosti
     seedlist = np.arange(88, 88+ n_seeds)
 
     
-    parent_dir = "/home/izet/Olivocerebellar-circuit"
+    parent_dir = Path(parent_dir)
     timestamp = timestamp or time.strftime("%m-%d_%H;%M;%S")
     results_dir = parent_dir / "results" / f"stim_experiments_{experiment}_{timestamp}"
     figures_dir = parent_dir / "figures" / f"figs_{experiment}_\"{tag}\"" if tag else ""
@@ -269,7 +269,7 @@ def baseline_commands(parent_dir, n_seeds=4, simdur= 10_000, experiment = "nosti
             f"python3 main_entrain.py --run-type train --experiment nostim --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False"
             f" --seed {seed}"
             f" --simdur {simdur}"
-            f" --parent-dir \"{parent_dir}\""
+            f" --parent-dir "/home/izet/Olivocerebellar-circuit"
             f" --timestamp \"{timestamp}\""
             + (f" --tag \"{tag}\"" if tag else "")
         )
