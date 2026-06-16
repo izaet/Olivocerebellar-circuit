@@ -126,6 +126,7 @@ def run_train(config):
     data.update(get_connections(net))
     
     np.savez(config["run_path"], **data)
+    print(f"Saved runner data to {config['run_path']}")
 
     end_time = time.time()
     print(f"Saving time taken: {end_time - start_time} s ")
@@ -251,7 +252,7 @@ def baseline_commands(parent_dir, n_seeds=4, simdur= 10_000, experiment = "nosti
     seedlist = np.arange(88, 88+ n_seeds)
 
     
-    parent_dir = Path(parent_dir)
+    parent_dir = "/home/izet/Olivocerebellar-circuit"
     timestamp = timestamp or time.strftime("%m-%d_%H;%M;%S")
     results_dir = parent_dir / "results" / f"stim_experiments_{experiment}_{timestamp}"
     figures_dir = parent_dir / "figures" / f"figs_{experiment}_\"{tag}\"" if tag else ""
