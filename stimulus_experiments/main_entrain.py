@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.append('C:/Users/HP/ModellingProjects/Olivocerebellar-circuit')
 
-from experiments_analysis.entrainment_experiments import (
+from stimulus_experiments.entrainment_experiments import (
     run_train,
     run_test,          
     get_parent_dir,
