@@ -11,6 +11,7 @@ from experiments_analysis.entrainment_experiments import (
     run_train,
     run_test,          
     get_parent_dir,
+    get_file_paths,
 )
 
 
@@ -68,6 +69,13 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--timestamp",
+        type=str,
+        default=None,
+        help="Optional fixed timestamp used for deterministic output folder names.",
+    )
+
+    parser.add_argument(
     "--pretraining-tag",
     type=str,
     default="",
@@ -97,7 +105,7 @@ def build_train_config(args):
     else:
         parent_dir = Path(args.parent_dir)
 
-    timestamp = time.strftime('%m-%d_%H;%M;%S')
+    timestamp = args.timestamp if args.timestamp else time.strftime('%m-%d_%H;%M;%S')
     tag = f"_{args.tag}" if args.tag else ""
 
     results_dir = parent_dir / "results" / f"stim_experiments_{args.experiment}{tag}_{timestamp}"
@@ -107,7 +115,7 @@ def build_train_config(args):
     for d in (results_dir, snapshot_dir, figures_dir):
         d.mkdir(parents=True, exist_ok=True)
 
-    run_fname = (f"{args.run_type}_{args.experiment}"f"_isi{args.OU_stim_isi_mean:.1f}_seed{args.seed}.npz")
+    run_fname = (f"{args.run_type}_{args.experiment}"f"_isi{args.OU_stim_isi_mean:.1f}_seed{args.seed}_simdur{args.simdur}.npz")
     run_path = results_dir / run_fname
 
     net_params = {
@@ -153,7 +161,7 @@ def build_test_config(args):
     else:
         parent_dir = Path(args.parent_dir)  
 
-    timestamp = time.strftime('%m-%d_%H;%M;%S')
+    timestamp = args.timestamp if args.timestamp else time.strftime('%m-%d_%H;%M;%S')
     tag = f"_{args.tag}" if args.tag else ""
 
    
@@ -162,6 +170,8 @@ def build_test_config(args):
     figures_dir = parent_dir / "figures" / f"figs_{args.experiment}{tag}"
 
     pretrain_snapshot_dir = parent_dir / "states" / f"states_{args.pretraining_tag}"
+    run_fname = f"test_{args.experiment}_seed{args.seed}.npz"
+    run_path = results_dir / run_fname
 
     net_params = {
         "PFPC_plasticity_on": args.PFPC_plasticity_on, 

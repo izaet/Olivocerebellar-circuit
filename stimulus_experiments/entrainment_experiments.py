@@ -1,4 +1,5 @@
 import time
+import copy
 import numpy as np
 import sys
 import os
@@ -237,55 +238,62 @@ def run_test(config):
 
 
             
-def run_training_commands(ISI_values = np.linspace(20, 200, 4), n_seeds = 4):
+def specific_training_commands(ISI_values = np.linspace(20, 200, 4), n_seeds = 4):
     seedlist = np.arange(88, 88+ n_seeds)
     for ISI in ISI_values:
         for seed in seedlist:
             print(f'python3 main_entrain.py --run-type train --PFPC_plasticity-on True --OU-stim-isi-mean{ISI} --seed {seed}')
         
 
+    
 
-def run_baseline_commands(n_seeds=4):
+def baseline_commands(parent_dir, n_seeds=4, simdur= 10_000, experiment = "nostim", tag = None, timestamp = None):
+    seedlist = np.arange(88, 88+ n_seeds)
+
+    
+    parent_dir = Path(parent_dir)
+    timestamp = timestamp or time.strftime("%m-%d_%H;%M;%S")
+    results_dir = parent_dir / "results" / f"stim_experiments_{experiment}_{timestamp}"
+    figures_dir = parent_dir / "figures" / f"figs_{experiment}_\"{tag}\"" if tag else ""
+    jobs = []
+
+
+    for seed in seedlist:
+        run_fname = f"train_{experiment}_isi120.0_seed{seed}_simdur{simdur}.npz"
+        run_path = results_dir / run_fname
+        snapshot_dir = parent_dir / "states" / f"states_{experiment}_isi120.0_seed{seed}"
+
+
+        command = (
+            f"python3 main_entrain.py --run-type train --experiment nostim --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False"
+            f" --seed {seed}"
+            f" --simdur {simdur}"
+            f" --parent-dir \"{parent_dir}\""
+            f" --timestamp \"{timestamp}\""
+            + (f" --tag \"{tag}\"" if tag else "")
+        )
+
+        jobs.append({
+            "command": command,
+            "run_path": str(run_path),
+            "snapshot_dir": str(snapshot_dir),
+            "figures_dir": str(figures_dir),
+            "seed": seed,
+        })
+
+    return jobs
+
+    
+
+def random_training_commands(n_seeds=4, duration = 10_000):
     seedlist = np.arange(88, 88+ n_seeds)
     for seed in seedlist:
-        print(f'python3 main_entrain.py --experiment nostim --run-type train --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False --seed {seed}')
-   
-    
-        
+        print(f'python3 main_entrain.py --experiment random-isi --run-type train --PFPC_plasticity-on True --OU-stim-io-on True --OU-stim-pf-on True --seed {seed} --simdur {duration}')    
 
-# def run_training_commands(ISI_values = np.linspace(20, 200, 4), n_seeds = 4):
-#     seedlist = np.arange(88, 88+ n_seeds)
-#     for ISI in ISI_values:
-#         for seed in seedlist:
-#             print(f'python3 run_entrain.py --run-type train --PFPC_plasticity-on True --OU-stim-isi-mean{ISI} --seed {seed}.txt')
-
-   
-# def generate_train_commands_p_bridges(
-#     p_values, seeds,
-#     condition="plasticity",
-#     outdir_root="results",
-#     script_name="run.py",
-# ):
-#     """
-#     Return a list of commands, one per (p, seed).
-#     """
-#     commands = []
-#     for p in p_values:
-#         for seed in seeds:
-#             cmd = (
-#                 f"python {script_name}"
-#                 f" --phase train"
-#                 f" --experiment specific-isi"
-#                 f" --seed {seed}"
-#                 f" --condition {condition}"
-#                 f" --io-bridge-probability {p:.4f}"
-#                 f" --outdir {outdir_root}"
-#             )
-#             commands.append(cmd)
-#     return commands
-
-
-
+def testing_commands(n_seeds=4, duration = 10_000):
+    seedlist = np.arange(88, 88+ n_seeds)
+    for seed in seedlist:
+        print(f'python3 main_entrain.py --experiment specific-isi --run-type test --PFPC_plasticity-on True --OU-stim-io-on True --OU-stim-pf-on True --seed {seed} --simdur {duration}')
 
 
 ########## ------------ Merging data for analysis ------------- ############
