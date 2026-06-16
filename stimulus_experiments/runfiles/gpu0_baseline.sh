@@ -1,0 +1,6 @@
+export CUDA_VISIBLE_DEVICES=0
+python3 main_entrain.py --run-type train --experiment nostim --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False --seed 88 --simdur 480000 --parent-dir "/home/izet/Olivocerebellar-circuit" --timestamp "06-16_16;02;23"
+python3 main_entrain.py --run-type train --experiment nostim --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False --seed 89 --simdur 480000 --parent-dir "/home/izet/Olivocerebellar-circuit" --timestamp "06-16_16;02;23"
+python3 main_entrain.py --run-type train --experiment nostim --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False --seed 90 --simdur 480000 --parent-dir "/home/izet/Olivocerebellar-circuit" --timestamp "06-16_16;02;23"
+python3 main_entrain.py --run-type train --experiment nostim --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False --seed 91 --simdur 480000 --parent-dir "/home/izet/Olivocerebellar-circuit" --timestamp "06-16_16;02;23"
+python3 main_entrain.py --run-type train --experiment nostim --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False --seed 92 --simdur 480000 --parent-dir "/home/izet/Olivocerebellar-circuit" --timestamp "06-16_16;02;23"

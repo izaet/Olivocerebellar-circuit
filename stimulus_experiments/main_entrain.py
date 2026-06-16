@@ -4,14 +4,15 @@ import os
 import time
 from pathlib import Path
 
+repo_root = Path(__file__).resolve().parents[1]
+if str(repo_root) not in sys.path:
+    sys.path.insert(0, str(repo_root))
 
-sys.path.append('C:/Users/HP/ModellingProjects/Olivocerebellar-circuit')
 
 from stimulus_experiments.entrainment_experiments import (
     run_train,
-    run_test,          
+    run_test,
     get_parent_dir,
-    get_file_paths,
 )
 
 
