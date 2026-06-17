@@ -109,7 +109,7 @@ def build_train_config(args):
     timestamp = args.timestamp if args.timestamp else time.strftime('%m-%d_%H;%M;%S')
     tag = f"_{args.tag}" if args.tag else ""
 
-    results_dir = parent_dir / "results" / f"stim_experiments_{args.experiment}{tag}_{timestamp}"
+    results_dir = parent_dir / "results" / f"stim_experiments_{args.experiment}{tag}"
     snapshot_dir = parent_dir / "states" / f"states_{args.experiment}_isi{args.OU_stim_isi_mean:.1f}_seed{args.seed}"
     figures_dir = parent_dir / "figures" / f"figs_{args.experiment}{tag}"
 

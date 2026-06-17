@@ -1,6 +1,6 @@
 export CUDA_VISIBLE_DEVICES=1
 python3 main_entrain.py --run-type train --experiment nostim --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False --seed 93 --simdur 480000 --parent-dir "/home/izet/Olivocerebellar-circuit" --timestamp "06-16_16;02;23"
-python3 main_entrain.py --run-type train --experiment nostim --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False --seed 94 --simdur 480000 --parent-dir "/home/izet/Olivocerebellar-circuit" --timestamp "06-16_16;02;23"
-python3 main_entrain.py --run-type train --experiment nostim --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False --seed 95 --simdur 480000 --parent-dir "/home/izet/Olivocerebellar-circuit" --timestamp "06-16_16;02;23"
-python3 main_entrain.py --run-type train --experiment nostim --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False --seed 96 --simdur 480000 --parent-dir "/home/izet/Olivocerebellar-circuit" --timestamp "06-16_16;02;23"
-python3 main_entrain.py --run-type train --experiment nostim --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False --seed 97 --simdur 480000 --parent-dir "/home/izet/Olivocerebellar-circuit" --timestamp "06-16_16;02;23"
+# python3 main_entrain.py --run-type train --experiment nostim --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False --seed 94 --simdur 480000 --parent-dir "/home/izet/Olivocerebellar-circuit" --timestamp "06-16_16;02;23"
+# python3 main_entrain.py --run-type train --experiment nostim --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False --seed 95 --simdur 480000 --parent-dir "/home/izet/Olivocerebellar-circuit" --timestamp "06-16_16;02;23"
+# python3 main_entrain.py --run-type train --experiment nostim --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False --seed 96 --simdur 480000 --parent-dir "/home/izet/Olivocerebellar-circuit" --timestamp "06-16_16;02;23"
+# python3 main_entrain.py --run-type train --experiment nostim --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False --seed 97 --simdur 480000 --parent-dir "/home/izet/Olivocerebellar-circuit" --timestamp "06-16_16;02;23"
