@@ -166,7 +166,7 @@ def build_test_config(args):
     tag = f"_{args.tag}" if args.tag else ""
 
    
-    results_dir = parent_dir / "results" / f"stim_experiments_{args.experiment}{tag}_{timestamp}"
+    results_dir = parent_dir / "results" / f"stim_experiments_{args.experiment}{tag}"
     snapshot_dir = parent_dir / "states" / f"states_{args.experiment}{tag}"
     figures_dir = parent_dir / "figures" / f"figs_{args.experiment}{tag}"
 
