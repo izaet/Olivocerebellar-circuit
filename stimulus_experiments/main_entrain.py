@@ -111,9 +111,9 @@ def build_train_config(args):
     timestamp = args.timestamp if args.timestamp else time.strftime('%m-%d_%H;%M;%S')
     tag = f"_{args.tag}" if args.tag else ""
 
-    results_dir = parent_dir / "results" / f"stim_experiments_{args.experiment}{tag}"
-    snapshot_dir = parent_dir / "states" / f"states_{args.experiment}{tag}"
-    figures_dir = parent_dir / "figures" / f"figs_{args.experiment}{tag}"
+    results_dir = parent_dir / "results" / f"stim_experiments_{args.experiment}_{tag}"
+    snapshot_dir = parent_dir / "states" / f"states_{args.experiment}_{tag}"
+    figures_dir = parent_dir / "figures" / f"figs_{args.experiment}_{tag}"
 
     for d in (results_dir, snapshot_dir, figures_dir):
         d.mkdir(parents=True, exist_ok=True)
@@ -171,9 +171,9 @@ def build_test_config(args):
     tag = f"_{args.tag}" if args.tag else ""
 
    
-    results_dir = parent_dir / "results" / f"stim_experiments_{args.experiment}{tag}"
+    results_dir = parent_dir / "results" / f"stim_experiments_{args.experiment}_{tag}"
     
-    figures_dir = parent_dir / "figures" / f"figs_{args.experiment}{tag}"
+    figures_dir = parent_dir / "figures" / f"figs_{args.experiment}_{tag}"
 
     for d in (results_dir, snapshot_dir, figures_dir):
         d.mkdir(parents=True, exist_ok=True)
@@ -230,7 +230,7 @@ def build_baseline_config(args):
     results_dir = parent_dir / "results" / f"stim_experiments_{args.experiment}_{tag}"
     figures_dir = parent_dir / "figures" / f"figs_{args.experiment}_{tag}"
 
-    for d in (results_dir, snapshot_dir, figures_dir):
+    for d in (results_dir,  figures_dir):
         d.mkdir(parents=True, exist_ok=True)
 
     run_fname = f"baseline_{args.experiment}_seed{args.seed}_simdur{args.simdur}.npz"

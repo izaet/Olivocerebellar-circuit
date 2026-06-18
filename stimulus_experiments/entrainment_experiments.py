@@ -204,14 +204,14 @@ def baseline_commands(parent_dir, n_seeds=4, simdur= 480_000, experiment = "nost
     
     parent_dir = Path(parent_dir)
     timestamp = timestamp or time.strftime("%m-%d_%H;%M;%S")
-
-    results_dir = parent_dir / "results" / f"stim_experiments_{experiment}_\"{tag}\"" if tag else ""
-    figures_dir = parent_dir / "figures" / f"figs_{experiment}_\"{tag}\"" if tag else ""
+    tag = f"_{tag}" if tag else ""
+    results_dir = parent_dir / "results" / f"stim_experiments_{experiment}_{tag}"
+    figures_dir = parent_dir / "figures" / f"figs_{experiment}_{tag}"
     jobs = []
 
 
     for seed in seedlist:
-        run_fname = f"baseline_{experiment}_isi120.0_seed{seed}_simdur{np.float64(simdur)}.npz"
+        run_fname = f"baseline_{experiment}_seed{seed}_simdur{np.float64(simdur)}.npz"
         run_path = results_dir / run_fname
         
 
@@ -270,13 +270,15 @@ def train_commands(parent_dir, n_seeds=4, simdur=480_000, ISI_values=None, exper
     
     parent_dir = Path(parent_dir)
     timestamp = timestamp or time.strftime("%m-%d_%H;%M;%S")
-    results_dir = parent_dir / "results" / f"stim_experiments_{experiment}"
-    figures_dir = parent_dir / "figures" / f"figs_{experiment}_\"{tag}\"" if tag else ""
+    tag = f"_{tag}" if tag else ""
+    results_dir = parent_dir / "results" / f"stim_experiments_{experiment}_{tag}"
+    figures_dir = parent_dir / "figures" / f"figs_{experiment}_{tag}"
+    snapshot_dir = parent_dir / "states" / f"states_{experiment}_isi{ISI:.1f}_seed{seed}_{tag}"
     jobs = []
     
     for ISI in ISI_values:
         for seed in seedlist:
-            snapshot_dir = parent_dir / "states" / f"states_{experiment}_isi{ISI:.1f}_seed{seed}"
+           
             snapshot_fname = f"{experiment}_isi{ISI:.1f}_seed{seed}_simdur{np.float64(simdur)}_state.bp"
             snapshot_path = snapshot_dir / snapshot_fname
             run_fname = f"train_{experiment}_isi{ISI:.1f}_seed{seed}_simdur{np.float64(simdur)}.npz"
@@ -362,8 +364,9 @@ def test_commands(parent_dir, n_seeds=4, simdur=480_000, ISI_values=None, ISI_st
     
     parent_dir = Path(parent_dir)
     timestamp = timestamp or time.strftime("%m-%d_%H;%M;%S")
-    results_dir = parent_dir / "results" / f"stim_experiments_{experiment}"
-    figures_dir = parent_dir / "figures" / f"figs_{experiment}_\"{tag}\"" if tag else ""
+    tag = f"_{tag}" if tag else ""
+    results_dir = parent_dir / "results" / f"stim_experiments_{experiment}_{tag}"
+    figures_dir = parent_dir / "figures" / f"figs_{experiment}_{tag}"
     jobs = []
     
     for pretrain_snapshot_path in pretraining_snapshot_paths:
@@ -424,10 +427,10 @@ def test_commands(parent_dir, n_seeds=4, simdur=480_000, ISI_values=None, ISI_st
                     f" --parent-dir {str(parent_dir)}"
                     f" --timestamp \"{timestamp}\""
                     f" --pretraining-tag \"{pretrain_snapshot_path.parent.name}\""
+                    + (f" --tag \"{tag}\"" if tag else "")
                 )
                 
-                if tag:
-                    command += f" --tag \"{tag}\""
+              
                 
                 if experiment == "random-isi":
                     command = command.replace("--PFPC_plasticity-on False", 
