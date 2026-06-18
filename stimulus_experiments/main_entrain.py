@@ -25,6 +25,7 @@ def parse_args():
 
     # Stimulus
     parser.add_argument("--OU-stim-isi-mean",  type=float, default=120.0, help='Mean interval between PF-IO (ms)')
+    parser.add_argument("--OU-stim-isi-std",  type=float, default=0.0, help='Standard deviation of interval between PF-IO (ms)')
     parser.add_argument("--OU-stim-freq", type=float, default=700.0, help='')
     parser.add_argument("--OU-stim-start",  type=float, default=200.0, help='')
     parser.add_argument("--OU-stim-amp-io-mean",  type=float, default=1.4, help='')
@@ -111,14 +112,17 @@ def build_train_config(args):
     tag = f"_{args.tag}" if args.tag else ""
 
     results_dir = parent_dir / "results" / f"stim_experiments_{args.experiment}{tag}"
-    snapshot_dir = parent_dir / "states" / f"states_{args.experiment}_isi{args.OU_stim_isi_mean:.1f}_seed{args.seed}"
+    snapshot_dir = parent_dir / "states" / f"states_{args.experiment}{tag}"
     figures_dir = parent_dir / "figures" / f"figs_{args.experiment}{tag}"
 
     for d in (results_dir, snapshot_dir, figures_dir):
         d.mkdir(parents=True, exist_ok=True)
 
-    run_fname = (f"{args.run_type}_{args.experiment}"f"_isi{args.OU_stim_isi_mean:.1f}_seed{args.seed}_simdur{args.simdur}.npz")
+    run_fname = (f"{args.run_type}_{args.experiment}"f"_isi{args.OU_stim_isi_mean:.1f}_isi_std{args.OU_stim_isi_std:.1f}seed{args.seed}_simdur{args.simdur}.npz")
     run_path = results_dir / run_fname
+
+    snapshot_fname = (f"{args.experiment}"f"_isi{args.OU_stim_isi_mean:.1f}_isi_std{args.OU_stim_isi_std:.1f}_seed{args.seed}_simdur{args.simdur}_state.bp")
+    snapshot_path = snapshot_dir / snapshot_fname
 
     net_params = {
         "PFPC_plasticity_on": args.PFPC_plasticity_on, 
@@ -149,7 +153,7 @@ def build_train_config(args):
         "net_params": net_params,
         "run_params": run_params,
        
-        "snapshot_dir": snapshot_dir,
+        "snapshot_path": snapshot_path,
         "run_path": run_path,
         "figures_dir": figures_dir,
 
@@ -168,13 +172,13 @@ def build_test_config(args):
 
    
     results_dir = parent_dir / "results" / f"stim_experiments_{args.experiment}{tag}"
-    snapshot_dir = parent_dir / "states" / f"states_{args.experiment}{tag}"
+    
     figures_dir = parent_dir / "figures" / f"figs_{args.experiment}{tag}"
 
     for d in (results_dir, snapshot_dir, figures_dir):
         d.mkdir(parents=True, exist_ok=True)
 
-    pretraining_snapshot_dir = None
+    pretraining_snapshot_path = None
     if args.pretraining_tag:
         pretraining_snapshot_dir = parent_dir / "states" / args.pretraining_tag
 
@@ -186,6 +190,7 @@ def build_test_config(args):
         "OU_stim_pf_on": args.OU_stim_pf_on,
         "OU_stim_io_on": args.OU_stim_io_on,
         "OU_stim_isi_mean": args.OU_stim_isi_mean,
+        "OU_stim_isi_std": args.OU_stim_isi_std,
         "OU_stim_freq": args.OU_stim_freq,
         "OU_stim_start": args.OU_stim_start,
         "OU_stim_amp_io_mean": args.OU_stim_amp_io_mean,
