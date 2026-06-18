@@ -105,13 +105,13 @@ def run_simulation(net, runner, duration, downsample= 30):
 
 #     return state, meta
 
-# def restore_state(net, state):
+def restore_state(net, state):
 
-#     for name, var in net.vars().items():
-#         if name in state:
-#             var.value = state[name]
+    for name, var in net.vars().items():
+        if name in state:
+            var.value = state[name]
 
-#     return net
+    return net
 
 
     
