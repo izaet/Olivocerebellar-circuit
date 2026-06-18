@@ -11,6 +11,7 @@ if str(repo_root) not in sys.path:
 
 from stimulus_experiments.entrainment_experiments import (
     run_train,
+    run_baseline,
     run_test,
     get_parent_dir,
 )
@@ -87,7 +88,7 @@ def parse_args():
     # ---- Run selection ----
     parser.add_argument(
         "--run-type",
-        choices=["train", "test"],
+        choices=["train", "baseline", "test"],
         required=True,
         help="Which type of run to perform.",
     )
@@ -160,7 +161,7 @@ def build_test_config(args):
     if args.parent_dir is None:
         parent_dir = Path(get_parent_dir())
     else:
-        parent_dir = Path(args.parent_dir)  
+        parent_dir = Path(args.parent_dir)
 
     timestamp = args.timestamp if args.timestamp else time.strftime('%m-%d_%H;%M;%S')
     tag = f"_{args.tag}" if args.tag else ""
@@ -170,15 +171,20 @@ def build_test_config(args):
     snapshot_dir = parent_dir / "states" / f"states_{args.experiment}{tag}"
     figures_dir = parent_dir / "figures" / f"figs_{args.experiment}{tag}"
 
-    pretrain_snapshot_dir = parent_dir / "states" / f"states_{args.pretraining_tag}"
-    run_fname = f"test_{args.experiment}_seed{args.seed}.npz"
+    for d in (results_dir, snapshot_dir, figures_dir):
+        d.mkdir(parents=True, exist_ok=True)
+
+    pretraining_snapshot_dir = None
+    if args.pretraining_tag:
+        pretraining_snapshot_dir = parent_dir / "states" / args.pretraining_tag
+
+    run_fname = f"test_{args.experiment}_seed{args.seed}_simdur{args.simdur}.npz"
     run_path = results_dir / run_fname
 
     net_params = {
-        "PFPC_plasticity_on": args.PFPC_plasticity_on, 
+        "PFPC_plasticity_on": args.PFPC_plasticity_on,
         "OU_stim_pf_on": args.OU_stim_pf_on,
         "OU_stim_io_on": args.OU_stim_io_on,
-
         "OU_stim_isi_mean": args.OU_stim_isi_mean,
         "OU_stim_freq": args.OU_stim_freq,
         "OU_stim_start": args.OU_stim_start,
@@ -186,27 +192,73 @@ def build_test_config(args):
         "OU_stim_amp_pf_mean": args.OU_stim_amp_pf_mean,
         "OU_stim_dur_io_mean": args.OU_stim_dur_io_mean,
         "OU_stim_dur_pf_mean": args.OU_stim_dur_pf_mean,
-
-        
-
     }
 
-    run_params = { 
+    run_params = {
         "seed": args.seed,
         "dt": args.dt,
         "downsample": args.downsample,
         "simdur": args.simdur,
-        "epoch_time": args.epoch_time
+        "epoch_time": args.epoch_time,
     }
 
     config = {
         "net_params": net_params,
         "run_params": run_params,
-       
         "snapshot_dir": snapshot_dir,
         "run_path": run_path,
         "figures_dir": figures_dir,
+        "pretraining_snapshot_dir": str(pretraining_snapshot_dir) if pretraining_snapshot_dir is not None else None,
+    }
+    return config
 
+
+def build_baseline_config(args):
+    if args.parent_dir is None:
+        parent_dir = Path(get_parent_dir())
+    else:
+        parent_dir = Path(args.parent_dir)
+
+    timestamp = args.timestamp if args.timestamp else time.strftime('%m-%d_%H;%M:%S')
+    tag = f"_{args.tag}" if args.tag else ""
+
+    results_dir = parent_dir / "results" / f"stim_experiments_{args.experiment}{tag}_{timestamp}"
+    snapshot_dir = parent_dir / "states" / f"states_baseline_{args.experiment}{tag}_{timestamp}"
+    figures_dir = parent_dir / "figures" / f"figs_{args.experiment}{tag}_{timestamp}"
+
+    for d in (results_dir, snapshot_dir, figures_dir):
+        d.mkdir(parents=True, exist_ok=True)
+
+    run_fname = f"baseline_{args.experiment}_seed{args.seed}_simdur{args.simdur}.npz"
+    run_path = results_dir / run_fname
+
+    net_params = {
+        "PFPC_plasticity_on": args.PFPC_plasticity_on,
+        "OU_stim_pf_on": args.OU_stim_pf_on,
+        "OU_stim_io_on": args.OU_stim_io_on,
+        "OU_stim_isi_mean": args.OU_stim_isi_mean,
+        "OU_stim_freq": args.OU_stim_freq,
+        "OU_stim_start": args.OU_stim_start,
+        "OU_stim_amp_io_mean": args.OU_stim_amp_io_mean,
+        "OU_stim_amp_pf_mean": args.OU_stim_amp_pf_mean,
+        "OU_stim_dur_io_mean": args.OU_stim_dur_io_mean,
+        "OU_stim_dur_pf_mean": args.OU_stim_dur_pf_mean,
+    }
+
+    run_params = {
+        "seed": args.seed,
+        "dt": args.dt,
+        "downsample": args.downsample,
+        "simdur": args.simdur,
+        "epoch_time": args.epoch_time,
+    }
+
+    config = {
+        "net_params": net_params,
+        "run_params": run_params,
+        "snapshot_dir": snapshot_dir,
+        "run_path": run_path,
+        "figures_dir": figures_dir,
     }
     return config
 
@@ -214,13 +266,14 @@ def main():
     args = parse_args()
 
     if args.run_type == "train":
-        config= build_train_config(args)
+        config = build_train_config(args)
         run_train(config)
-
-        
-    elif args.run_type == 'test':
-        config= build_test_config(args)
-        # run_test(config)
+    elif args.run_type == "baseline":
+        config = build_baseline_config(args)
+        run_baseline(config)
+    elif args.run_type == "test":
+        config = build_test_config(args)
+        run_test(config)
     else:
         raise ValueError(f"Unknown run_type: {args.run_type}")
     

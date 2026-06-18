@@ -75,12 +75,16 @@ def init_net_and_runner(net_params=None, dt=0.025 , seed=88, jit=True):
 
     }
 
-    runner = bp.DSRunner(net, monitors=monitors, dt=dt, jit =jit, progress_bar= False)
- 
+    runner = bp.DSRunner(net, monitors=monitors, dt=dt, jit=jit, progress_bar=False)
     if jit:
         runner._fun_predict = bm.jit(runner._fun_predict)
+    return net, runner
+    
 
-        return net, runner
+def run_simulation(net, runner, duration, downsample):
+    runner.run(duration)
+    data = {k: np.array(runner.mon[k][::downsample]) for k in runner.mon}
+    return net, runner, data
     
 
     

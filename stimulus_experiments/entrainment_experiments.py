@@ -17,7 +17,7 @@ import json
 import brainpy.checkpoints as bc
 
 sys.path.append('C:/Users/HP/ModellingProjects/Olivocerebellar-circuit')
-from models.setup_net_run import *
+from models.setup_net_run import init_net_and_runner, restore_state, run_until_convergence, run_simulation
 
 
 # - command generator function for all testing (+pretraining) conditions
@@ -33,13 +33,11 @@ def get_parent_dir():
     
 
 def save_snapshot(config, state, metadata):
-    snapshot_dir= config['snapshot_dir']
+    snapshot_dir = config['snapshot_dir']
+    os.makedirs(snapshot_dir, exist_ok=True)
 
-    # Save state and metadata
-   
     state_path = os.path.join(snapshot_dir, "_state.bp")
     bc.save_pytree(state_path, state)
-   
 
     # meta_path = os.path.join(snapshot_dir, "_meta.json")
     # with open(meta_path, "w") as f:
@@ -47,17 +45,10 @@ def save_snapshot(config, state, metadata):
 
 
 def load_snapshot(snapshot_dir):
-     
-    
     state_path = os.path.join(snapshot_dir, "_state.bp")
-    state= bc.load_pytree(state_path)
-
-    # meta_path = os.path.join(snapshot_dir, "_meta.json")
-    # with open(meta_path, "r") as f:
-    #     meta = json.load(f)
-    # , meta
-
+    state = bc.load_pytree(state_path)
     return state
+
 def get_connections(net):
 
     connections_idx = {
@@ -81,90 +72,119 @@ def get_io_topography (net):
     return io_topography
 
 def run_train(config):
-
-   
     current_net_params = config['net_params']
     run_params = config['run_params']
-    seed =  run_params['seed']
-    dt =  run_params['dt']
-    downsample =  run_params['downsample']
+    downsample = run_params['downsample']
     max_runtime = run_params['simdur']
     epoch_time = run_params['epoch_time']
 
-    # Get network
     net, runner = init_net_and_runner(current_net_params)
 
-    # Run experiment
     start_time = time.time()
-
     try:
-        net, runner, data, d_w_chunk_max, runtime  = run_until_convergence(net, runner, downsample, max_runtime= max_runtime, epoch = epoch_time)
+        net, runner, data, d_w_chunk_max, runtime = run_until_convergence(
+            net,
+            runner,
+            downsample,
+            max_runtime=max_runtime,
+            epoch=epoch_time,
+        )
     except Exception as e:
         full_error = traceback.format_exc()
-        tqdm.write(f"Error during simulation: {e}\n{full_error}")
-   
+        tqdm.write(f"Error during training simulation: {e}\n{full_error}")
+        raise
     end_time = time.time()
-    
-    if runtime < runtime:
+
+    if runtime < max_runtime:
         print(f"Converged at t={runtime} ms (max Δw={d_w_chunk_max:.2e})")
     else:
         print(f"Not converged, t={max_runtime} ms")
-
-    print(f"Simulation time taken = {end_time- start_time} s")
-
+    print(f"Training simulation time taken = {end_time - start_time} s")
 
     start_time = time.time()
-
-    # Get network state and save
-    state= bp.save_state(net)
-    metadata = copy.deepcopy(config)
-
-    save_snapshot(config, state, metadata)
-    
+    state = bp.save_state(net)
+    save_snapshot(config, state, copy.deepcopy(config))
     data.update(current_net_params)
     data.update(run_params)
     data.update(get_connections(net))
-    
     np.savez(config["run_path"], **data)
-    print(f"Saved runner data to {config['run_path']}")
-
+    print(f"Saved training runner data to {config['run_path']}")
     end_time = time.time()
-    print(f"Saving time taken: {end_time - start_time} s ")
+    print(f"Training saving time taken: {end_time - start_time} s")
 
     return net, data, state
 
 
-
-def run_test(config):
-
+def run_baseline(config):
     current_net_params = config['net_params']
-    seed = config['seed']
-    sim_duration = config['simtime']
-    dt = config['dt']
-    downsample = config
+    run_params = config['run_params']
+    downsample = run_params['downsample']
+    duration = run_params['simdur']
 
+    net, runner = init_net_and_runner(current_net_params)
 
-    # Get network
-    
-
-
-    # Run experiment
     start_time = time.time()
-
     try:
-        runner, io_topography_params, connections_idx = net.simulate(
-            sim_duration=sim_duration, dt=dt, net_params=current_net_params, seed= int(seed))
+        net, runner, data = run_simulation(net, runner, duration, downsample)
     except Exception as e:
         full_error = traceback.format_exc()
-        tqdm.write(f"Error during simulation: {e}\n{full_error}")
-   
+        tqdm.write(f"Error during baseline simulation: {e}\n{full_error}")
+        raise
     end_time = time.time()
-    print("Runner time taken: ", end_time - start_time)
+    print(f"Baseline simulation time taken = {end_time - start_time} s")
 
-    # Save data
     start_time = time.time()
-    data = {k: np.array(runner.mon[k][::downsample]) for k in runner.mon}
-    data.update(net_params)
+    state = bp.save_state(net)
+    save_snapshot(config, state, copy.deepcopy(config))
+    data.update(current_net_params)
+    data.update(run_params)
+    data.update(get_connections(net))
+    np.savez(config["run_path"], **data)
+    print(f"Saved baseline runner data to {config['run_path']}")
+    end_time = time.time()
+    print(f"Baseline saving time taken: {end_time - start_time} s")
+
+    return net, data, state
+
+
+def run_test(config):
+    current_net_params = config['net_params']
+    run_params = config['run_params']
+    downsample = run_params['downsample']
+    duration = run_params['simdur']
+
+    pretraining_snapshot_dir = config.get("pretraining_snapshot_dir")
+    if pretraining_snapshot_dir is None:
+        raise ValueError("run_test requires a pretraining_snapshot_dir in config")
+    if not os.path.exists(pretraining_snapshot_dir):
+        raise FileNotFoundError(f"Pretraining snapshot not found: {pretraining_snapshot_dir}")
+
+    pretrain_state = load_snapshot(pretraining_snapshot_dir)
+    net, runner = init_net_and_runner(current_net_params)
+    net = restore_state(net, pretrain_state)
+
+    start_time = time.time()
+    try:
+        net, runner, data = run_simulation(net, runner, duration, downsample)
+    except Exception as e:
+        full_error = traceback.format_exc()
+        tqdm.write(f"Error during test simulation: {e}\n{full_error}")
+        raise
+    end_time = time.time()
+    print(f"Test simulation time taken = {end_time - start_time} s")
+
+    start_time = time.time()
+    state = bp.save_state(net)
+    save_snapshot(config, state, copy.deepcopy(config))
+    data.update(current_net_params)
+    data.update(run_params)
+    data.update(get_connections(net))
+    np.savez(config["run_path"], **data)
+    print(f"Saved test runner data to {config['run_path']}")
+    end_time = time.time()
+    print(f"Test saving time taken: {end_time - start_time} s")
+
+    return net, data, state
 
 
 
@@ -260,7 +280,7 @@ def baseline_commands(parent_dir, n_seeds=4, simdur= 10_000, experiment = "nosti
 
 
     for seed in seedlist:
-        run_fname = f"train_{experiment}_isi120.0_seed{seed}_simdur{simdur}.npz"
+        run_fname = f"train_{experiment}_isi120.0_seed{seed}_simdur{np.float64(simdur)}.npz"
         run_path = results_dir / run_fname
         snapshot_dir = parent_dir / "states" / f"states_{experiment}_isi120.0_seed{seed}"
 
@@ -268,7 +288,7 @@ def baseline_commands(parent_dir, n_seeds=4, simdur= 10_000, experiment = "nosti
         command = (
             f"python3 main_entrain.py --run-type train --experiment nostim --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False"
             f" --seed {seed}"
-            f" --simdur {simdur}"
+            f" --simdur {np.float64(simdur)}"
             f" --parent-dir /home/izet/Olivocerebellar-circuit"
             f" --timestamp \"{timestamp}\""
             + (f" --tag \"{tag}\"" if tag else "")
