@@ -204,15 +204,16 @@ def baseline_commands(parent_dir, n_seeds=4, simdur= 480_000, experiment = "nost
     
     parent_dir = Path(parent_dir)
     timestamp = timestamp or time.strftime("%m-%d_%H;%M;%S")
-    results_dir = parent_dir / "results" / f"stim_experiments_{experiment}"
+
+    results_dir = parent_dir / "results" / f"stim_experiments_{experiment}_\"{tag}\"" if tag else ""
     figures_dir = parent_dir / "figures" / f"figs_{experiment}_\"{tag}\"" if tag else ""
     jobs = []
 
 
     for seed in seedlist:
-        run_fname = f"train_{experiment}_isi120.0_seed{seed}_simdur{np.float64(simdur)}.npz"
+        run_fname = f"baseline_{experiment}_isi120.0_seed{seed}_simdur{np.float64(simdur)}.npz"
         run_path = results_dir / run_fname
-        snapshot_dir = parent_dir / "states" / f"states_{experiment}_isi120.0_seed{seed}"
+        
 
 
         command = (
@@ -227,7 +228,6 @@ def baseline_commands(parent_dir, n_seeds=4, simdur= 480_000, experiment = "nost
         jobs.append({
             "command": command,
             "run_path": str(run_path),
-            "snapshot_dir": str(snapshot_dir),
             "figures_dir": str(figures_dir),
             "seed": seed,
         })

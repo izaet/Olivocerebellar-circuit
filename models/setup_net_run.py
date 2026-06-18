@@ -81,7 +81,7 @@ def init_net_and_runner(net_params=None, dt=0.025 , seed=88, jit=True):
     return net, runner
     
 
-def run_simulation(net, runner, duration, downsample):
+def run_simulation(net, runner, duration, downsample= 30):
     runner.run(duration)
     data = {k: np.array(runner.mon[k][::downsample]) for k in runner.mon}
     return net, runner, data
@@ -115,7 +115,7 @@ def run_simulation(net, runner, duration, downsample):
 
 
     
-def run_until_convergence(net, runner, downsample, max_runtime = 500_000, epoch =  1000, conv_thresh= 1e-4, chunk_thresh = 3):
+def run_until_convergence(net, runner, downsample= 30, max_runtime = 500_000, epoch =  1000, conv_thresh= 1e-4, chunk_thresh = 3):
     net.pf_to_pc_BCM.plasticity_on.value= bm.asarray(True)
 
 
