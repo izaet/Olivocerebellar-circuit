@@ -129,8 +129,7 @@ def run_baseline(config):
     print(f"Baseline simulation time taken = {end_time - start_time} s")
 
     start_time = time.time()
-    state = bp.save_state(net)
-    save_snapshot(config, state, copy.deepcopy(config))
+   
     data.update(current_net_params)
     data.update(run_params)
     data.update(get_connections(net))
@@ -139,7 +138,7 @@ def run_baseline(config):
     end_time = time.time()
     print(f"Baseline saving time taken: {end_time - start_time} s")
 
-    return net, data, state
+    return net, data
 
 
 def run_test(config):
