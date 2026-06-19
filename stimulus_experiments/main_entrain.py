@@ -111,9 +111,9 @@ def build_train_config(args):
     timestamp = args.timestamp if args.timestamp else time.strftime('%m-%d_%H;%M;%S')
     tag = f"_{args.tag}" if args.tag else ""
 
-    results_dir = parent_dir / "results" / f"stim_experiments_{args.experiment}_{tag}"
+    results_dir = parent_dir / "results" / f"stim_experiments_train_{args.experiment}_{tag}"
     snapshot_dir = parent_dir / "states" / f"states_{args.experiment}_{tag}"
-    figures_dir = parent_dir / "figures" / f"figs_{args.experiment}_{tag}"
+    figures_dir = parent_dir / "figures" / f"figs_train_{args.experiment}_{tag}"
 
     for d in (results_dir, snapshot_dir, figures_dir):
         d.mkdir(parents=True, exist_ok=True)
@@ -171,9 +171,9 @@ def build_test_config(args):
     tag = f"_{args.tag}" if args.tag else ""
 
    
-    results_dir = parent_dir / "results" / f"stim_experiments_{args.experiment}_{tag}"
+    results_dir = parent_dir / "results" / f"stim_experiments_test_{args.experiment}_{tag}"
     
-    figures_dir = parent_dir / "figures" / f"figs_{args.experiment}_{tag}"
+    figures_dir = parent_dir / "figures" / f"figs_test_{args.experiment}_{tag}"
 
     for d in (results_dir, snapshot_dir, figures_dir):
         d.mkdir(parents=True, exist_ok=True)
@@ -227,8 +227,8 @@ def build_baseline_config(args):
     timestamp = args.timestamp if args.timestamp else time.strftime('%m-%d_%H;%M:%S')
     tag = f"_{args.tag}" if args.tag else ""
 
-    results_dir = parent_dir / "results" / f"stim_experiments_{args.experiment}_{tag}"
-    figures_dir = parent_dir / "figures" / f"figs_{args.experiment}_{tag}"
+    results_dir = parent_dir / "results" / f"stim_experiments_baseline_{args.experiment}_{tag}"
+    figures_dir = parent_dir / "figures" / f"figs_baseline_{args.experiment}_{tag}"
 
     for d in (results_dir,  figures_dir):
         d.mkdir(parents=True, exist_ok=True)
