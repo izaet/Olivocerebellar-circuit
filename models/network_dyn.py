@@ -123,7 +123,7 @@ class PFtoPC_BCM(bp.dyn.SynDyn):
         self.w_cspk.value = self.w_cspk.value * bm.exp(-dt / self.tau_cspk) + dw_cspk_increase
 
         # Final sum of weights
-        self.weights_per_conn.value = bm.clip(self.init_weight + (plasticity_gate * 0.4 * (self.w_BCM.value + self.w_cspk.value)), 0 ,5)
+        self.weights_per_conn.value = bm.clip(self.init_weight + (plasticity_gate * 0.4 * (self.w_BCM.value + self.w_cspk.value)), 0 ,5) # (Eq. 14)
 
 
 class PFtoPC(bp.dyn.SynConn):

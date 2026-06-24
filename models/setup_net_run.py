@@ -17,6 +17,7 @@ import json
 import copy
 
 from models.network_dyn import CerebellarNetwork
+from models.monitors import monitor_presets
 
 
 def init_net_and_runner(net_params=None, dt=0.025 , seed=88, jit=True):
@@ -33,48 +34,10 @@ def init_net_and_runner(net_params=None, dt=0.025 , seed=88, jit=True):
     net = CerebellarNetwork(**net_params)
 
 
-    # --- Monitors Configuration --- #c
-    monitors = {
-        # Neuron monitors
-        "pf.I_OU": net.pf.I_OU,
-        "pf.I_stim": net.pf.I_stim,
-        "pf.rho": net.pf.rho,
-
-        "pc.V": net.pc.V,
-        "pc.spike": net.pc.spike,
-        "pc.cspk": net.pc.cspk,
-        "pc.w": net.pc.w,
-        "pc.input": net.pc.input,
-        "pc.rho": net.pc.rho,
-
-        "cn.V": net.cn.V,
-        "cn.spike": net.cn.spike,
-        "cn.I_PC": net.cn.I_PC,
-
-        "io.V_soma": net.io.neurons.V_soma,
-        "io.V_axon": net.io.neurons.V_axon,
-        "io.V_dend": net.io.neurons.V_dend,
-        "io.input": net.io.neurons.input,
-        "io.I_OU": net.io.neurons.I_OU,
-        "io.I_stim": net.io.neurons.I_stim,
-        "io.spike": net.io.neurons.spike,
-        
-        # Plasticity monitors
-        "pfpc_weights": net.pf_to_pc_BCM.weights_per_conn,
-        "pfpc_w_cspk" : net.pf_to_pc_BCM.w_cspk,
-        "pfpc_w_BCM" : net.pf_to_pc_BCM.w_BCM,
-        "pfpc_theta_M" : net.pf_to_pc_BCM.theta_M,
-        "pfpc_dw_cspk": net.pf_to_pc_BCM.dw_cspk,
-        "pfpc_dw_BCM": net.pf_to_pc_BCM.dw_BCM,
-
-
-        # Stimulus monitors
-        "stim.isi": net.stim.current_isi,
-        "stim.M_io": net.stim.M_io,
-        "stim.M_pf": net.stim.M_pf,
-
-    }
-
+    # --- Monitors Configuration --- #
+    monitor_function = monitor_presets[net_params["monitor_preset"]]
+    monitors = monitor_function(net)
+    
     runner = bp.DSRunner(net, monitors=monitors, dt=dt, jit=jit, progress_bar=False)
     if jit:
         runner._fun_predict = bm.jit(runner._fun_predict)
@@ -190,43 +153,7 @@ def init_and_run(duration=1000.0, dt=0.025, net_params=None, seed=42, jit=True):
                             "n_neurons": net.num_io}
 
     # --- Monitors Configuration --- #
-    monitors = {
-        # Neuron monitors
-        "pf.I_OU": net.pf.I_OU,
-        "pf.I_stim": net.pf.I_stim,
-        "pf.rho": net.pf.rho,
-        "pc.V": net.pc.V,
-        "pc.spike": net.pc.spike,
-        "pc.cspk": net.pc.cspk,
-        "pc.w": net.pc.w,
-        "pc.input": net.pc.input,
-        "pc.rho": net.pc.rho,
-        "cn.V": net.cn.V,
-        "cn.spike": net.cn.spike,
-        "cn.I_PC": net.cn.I_PC,
-        "io.V_soma": net.io.neurons.V_soma,
-        "io.V_axon": net.io.neurons.V_axon,
-        "io.V_dend": net.io.neurons.V_dend,
-        "io.input": net.io.neurons.input,
-        "io.I_OU": net.io.neurons.I_OU,
-        "io.I_stim": net.io.neurons.I_stim,
-        "io.spike": net.io.neurons.spike,
-        
-        # Plasticity monitors
-        "pfpc_weights": net.pf_to_pc_BCM.weights_per_conn,
-        "pfpc_w_cspk" : net.pf_to_pc_BCM.w_cspk,
-        "pfpc_w_BCM" : net.pf_to_pc_BCM.w_BCM,
-        "pfpc_theta_M" : net.pf_to_pc_BCM.theta_M,
-        "pfpc_dw_cspk": net.pf_to_pc_BCM.dw_cspk,
-        "pfpc_dw_BCM": net.pf_to_pc_BCM.dw_BCM,
 
-
-        # Stimulus monitors
-        "stim.isi": net.stim.current_isi,
-        "stim.M_io": net.stim.M_io,
-        "stim.M_pf": net.stim.M_pf,
-
-    }
 
     runner = bp.DSRunner(net, monitors=monitors, dt=dt, jit =jit, progress_bar=True)
     runner.progress_bar = False

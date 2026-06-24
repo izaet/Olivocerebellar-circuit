@@ -18,7 +18,7 @@ from stimulus_experiments.entrainment_experiments import (
 
 
 
-def parse_args():
+def parse_args(arg_list= None):
     parser = argparse.ArgumentParser(description= "ISI training runs")
 
     # ----------------- Network and stimulus parameters ---------------------
@@ -46,6 +46,9 @@ def parse_args():
                     help="Number of cerebellar nuclei cells")
     parser.add_argument("--num-io", type=int, default=40,
                     help="Number of inferior olive cells")
+    
+
+    parser.add_argument("--monitor-preset", type=str, default="neuron_min", choices=["plasticity_full", "plasticity_min", "neuron_min", "stimulus", "neuron_spike"], help="Which set of monitors to use.")
 
 
     # -------------------- Run parameters ------------------------------
@@ -54,7 +57,7 @@ def parse_args():
     parser.add_argument("--dt", type=float, default=0.025,  help="Integration time-step (ms)")
     parser.add_argument("--downsample", type=int, default= 40)
     parser.add_argument("--epoch-time", type = int, default = 1000, help= "Duration of epochs to check convergence over (ms)")
-
+    
 
     # --------------------- Directories / naming ---------------------
 
@@ -100,7 +103,7 @@ def parse_args():
         help="Stimulus protocol / task.",
     )
 
-    return parser.parse_args()
+    return parser.parse_args(arg_list)
 
 def build_train_config(args):
     if args.parent_dir is None:
@@ -111,7 +114,7 @@ def build_train_config(args):
     timestamp = args.timestamp if args.timestamp else time.strftime('%m-%d_%H;%M;%S')
     tag = f"_{args.tag}" if args.tag else ""
 
-    results_dir = parent_dir / "results" / f"stim_experiments_train_{args.experiment}_{tag}"
+    results_dir = parent_dir / "results" / f"stim_experiments_train_{args.experiment}_mon_{args.monitor_preset}_{tag}"
     snapshot_dir = parent_dir / "states" / f"states_{args.experiment}_{tag}"
     figures_dir = parent_dir / "figures" / f"figs_train_{args.experiment}_{tag}"
 
@@ -136,6 +139,8 @@ def build_train_config(args):
         "OU_stim_amp_pf_mean": args.OU_stim_amp_pf_mean,
         "OU_stim_dur_io_mean": args.OU_stim_dur_io_mean,
         "OU_stim_dur_pf_mean": args.OU_stim_dur_pf_mean,
+
+        "monitor_preset": args.monitor_preset,
 
         
 
@@ -171,7 +176,7 @@ def build_test_config(args):
     tag = f"_{args.tag}" if args.tag else ""
 
    
-    results_dir = parent_dir / "results" / f"stim_experiments_test_{args.experiment}_{tag}"
+    results_dir = parent_dir / "results" / f"stim_experiments_test_{args.experiment}_mon_{args.monitor_preset}_{tag}"
     
     figures_dir = parent_dir / "figures" / f"figs_test_{args.experiment}_{tag}"
 
@@ -197,6 +202,9 @@ def build_test_config(args):
         "OU_stim_amp_pf_mean": args.OU_stim_amp_pf_mean,
         "OU_stim_dur_io_mean": args.OU_stim_dur_io_mean,
         "OU_stim_dur_pf_mean": args.OU_stim_dur_pf_mean,
+
+        "monitor_preset": args.monitor_preset,
+
     }
 
     run_params = {
@@ -227,7 +235,7 @@ def build_baseline_config(args):
     timestamp = args.timestamp if args.timestamp else time.strftime('%m-%d_%H;%M:%S')
     tag = f"_{args.tag}" if args.tag else ""
 
-    results_dir = parent_dir / "results" / f"stim_experiments_baseline_{args.experiment}_{tag}"
+    results_dir = parent_dir / "results" / f"stim_experiments_baseline_{args.experiment}_mon_{args.monitor_preset}_{tag}"
     figures_dir = parent_dir / "figures" / f"figs_baseline_{args.experiment}_{tag}"
 
     for d in (results_dir,  figures_dir):
@@ -247,6 +255,9 @@ def build_baseline_config(args):
         "OU_stim_amp_pf_mean": args.OU_stim_amp_pf_mean,
         "OU_stim_dur_io_mean": args.OU_stim_dur_io_mean,
         "OU_stim_dur_pf_mean": args.OU_stim_dur_pf_mean,
+
+        "monitor_preset": args.monitor_preset,
+
     }
 
     run_params = {
