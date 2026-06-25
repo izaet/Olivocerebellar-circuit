@@ -187,17 +187,7 @@ def run_test(config):
 
 ################# -------------- Experiments / command generators  -------------- ##################
 
-            
-def specific_training_commands(ISI_values = np.linspace(20, 200, 4), n_seeds = 4):
-    seedlist = np.arange(88, 88+ n_seeds)
-    for ISI in ISI_values:
-        for seed in seedlist:
-            print(f'python3 main_entrain.py --run-type train --PFPC_plasticity-on True --OU-stim-isi-mean{ISI} --seed {seed}')
-        
-
-    
-
-def baseline_commands(parent_dir, monitor, n_seeds=4, simdur= 480_000, experiment = "nostim", tag = None, timestamp = None):
+def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 480_000, experiment = "nostim", tag = None, timestamp = None):
     seedlist = np.arange(88, 88+ n_seeds)
 
     
@@ -218,7 +208,7 @@ def baseline_commands(parent_dir, monitor, n_seeds=4, simdur= 480_000, experimen
         command = (
             f"python3 main_entrain.py --run-type baseline --experiment {experiment} --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False"
             f" --seed {seed}"
-            f" --monitor-preset {monitor}"
+            f" --monitor-preset \"{monitor}\""
             f" --simdur {np.float64(simdur)}"
             f" --parent-dir /home/izet/Olivocerebellar-circuit"
             f" --timestamp \"{timestamp}\""
@@ -288,7 +278,7 @@ def train_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=No
                 f"python3 main_entrain.py --run-type train --experiment {experiment}"
                 f" --PFPC_plasticity-on True"
                 f" --seed {seed}"
-                f" --monitor-preset {monitor}"
+                f" --monitor-preset \"{monitor}\""
                 f" --simdur {np.float64(simdur)}"
                 f" --parent-dir {str(parent_dir)}"
                 f" --timestamp \"{timestamp}\""
@@ -424,7 +414,7 @@ def test_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=Non
                     f"python3 main_entrain.py --run-type test --experiment {experiment}"
                     f" --PFPC_plasticity-on False --OU-stim-isi-mean {test_isi}"
                     f" --seed {test_seed}"
-                    f" --monitor-preset {monitor}"
+                    f" --monitor-preset \"{monitor}\""
                     f" --simdur {np.float64(simdur)}"
                     f" --parent-dir {str(parent_dir)}"
                     f" --timestamp \"{timestamp}\""
@@ -458,19 +448,6 @@ def test_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=Non
                 })
     
     return jobs
-
-    
-
-def random_training_commands(n_seeds=4, duration = 10_000):
-    seedlist = np.arange(88, 88+ n_seeds)
-    for seed in seedlist:
-        print(f'python3 main_entrain.py --experiment random-isi --run-type train --PFPC_plasticity-on True --OU-stim-io-on True --OU-stim-pf-on True --seed {seed} --simdur {duration}')    
-
-def testing_commands(n_seeds=4, duration = 10_000):
-    seedlist = np.arange(88, 88+ n_seeds)
-    for seed in seedlist:
-        print(f'python3 main_entrain.py --experiment specific-isi --run-type test --PFPC_plasticity-on True --OU-stim-io-on True --OU-stim-pf-on True --seed {seed} --simdur {duration}')
-
 
 ########## ------------ Merging data for analysis ------------- ############
 
