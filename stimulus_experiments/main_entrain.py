@@ -82,10 +82,10 @@ def parse_args(arg_list= None):
     )
 
     parser.add_argument(
-    "--pretraining-tag",
+    "--pretraining-path",
     type=str,
     default="",
-    help="Tag of pretraining run to load in network state",
+    help="Path to pretraining run to load in network state",
     )
 
 
@@ -180,12 +180,14 @@ def build_test_config(args):
     
     figures_dir = parent_dir / "figures" / f"figs_test_{args.experiment}_{tag}"
 
-    for d in (results_dir, snapshot_dir, figures_dir):
+    for d in (results_dir, figures_dir):
         d.mkdir(parents=True, exist_ok=True)
 
-    pretraining_snapshot_path = None
-    if args.pretraining_tag:
-        pretraining_snapshot_dir = parent_dir / "states" / args.pretraining_tag
+
+    if args.pretraining_path:
+        pretraining_snapshot_dir = Path(args.pretraining_path)
+    else:
+        raise ValueError("Pretraining path must be provided for test runs.")
 
     run_fname = f"test_{args.experiment}_seed{args.seed}_simdur{args.simdur}.npz"
     run_path = results_dir / run_fname
@@ -218,10 +220,9 @@ def build_test_config(args):
     config = {
         "net_params": net_params,
         "run_params": run_params,
-        "snapshot_dir": snapshot_dir,
         "run_path": run_path,
         "figures_dir": figures_dir,
-        "pretraining_snapshot_dir": str(pretraining_snapshot_dir) if pretraining_snapshot_dir is not None else None,
+        "pretraining_state_path": pretraining_snapshot_dir
     }
     return config
 

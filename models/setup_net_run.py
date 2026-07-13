@@ -31,7 +31,7 @@ def init_net_and_runner(net_params=None, dt=0.025 , seed=88, jit=True):
     if net_params is None:
         net_params = {}
 
-    net = CerebellarNetwork(**net_params)
+    net = CerebellarNetwork(**net_params, name = "CerebellarNetwork9")
 
 
     # --- Monitors Configuration --- #
@@ -50,31 +50,6 @@ def run_simulation(net, runner, duration, downsample= 30):
     return net, runner, data
     
 
-    
-
-    
-# def snapshot_net(config, net, extra_meta = None):
-#     state = {}
-   
-
-#     # Copy state (includes bm.Variables)
-#     for name, var in net.vars().items():
-#         state[name] = bm.as_numpy(var.value)
-   
-#     meta = copy.deepcopy(config)
-#     if extra_meta:
-#         meta.update(extra_meta)
-    
-
-#     return state, meta
-
-def restore_state(net, state):
-
-    for name, var in net.vars().items():
-        if name in state:
-            var.value = state[name]
-
-    return net
 
 
     
@@ -125,10 +100,6 @@ def run_until_convergence(net, runner, downsample= 30, max_runtime = 500_000, ep
     return net, runner, full_mon, d_w_chunk_max, runtime
 
     
-
-
-
-
 def init_and_run(duration=1000.0, dt=0.025, net_params=None, seed=42, jit=True):
     np.random.seed(seed)
     bm.random.seed(seed)
@@ -138,7 +109,7 @@ def init_and_run(duration=1000.0, dt=0.025, net_params=None, seed=42, jit=True):
         net_params = {}
     # Silence warnings
     warnings.filterwarnings("ignore", category=FutureWarning)
-    net = CerebellarNetwork(**net_params)
+    net = CerebellarNetwork(**net_params, name="CerebellarNetwork9") 
 
     # --- Params to return ------- #
     connections_idx = {"pf_pc_pre": net.pf_to_pc_BCM.pre_idx,
@@ -164,3 +135,4 @@ def init_and_run(duration=1000.0, dt=0.025, net_params=None, seed=42, jit=True):
 
 
     return runner, io_topography_params, connections_idx
+

@@ -15,9 +15,10 @@ import importlib
 import itertools
 import json
 import brainpy.checkpoints as bc
+import models.load_state_patch
 
 sys.path.append('C:/Users/HP/ModellingProjects/Olivocerebellar-circuit')
-from models.setup_net_run import init_net_and_runner, restore_state, run_until_convergence, run_simulation
+from models.setup_net_run import init_net_and_runner, run_until_convergence, run_simulation
 
 
 # - command generator function for all testing (+pretraining) conditions
@@ -33,10 +34,8 @@ def get_parent_dir():
     
 
 def save_snapshot(config, state, metadata):
-    snapshot_dir = config['snapshot_dir']
-    os.makedirs(snapshot_dir, exist_ok=True)
-    state_path = os.path.join(snapshot_dir, "_state.bp")
-    bc.save_pytree(state_path, state)
+    snapshot_path = config['snapshot_path']
+    bc.save_pytree(snapshot_path, state)
 
 
 def load_snapshot(snapshot_dir):
@@ -155,7 +154,7 @@ def run_test(config):
 
     pretrain_state = load_snapshot(pretraining_snapshot_dir)
     net, runner = init_net_and_runner(current_net_params)
-    net = restore_state(net, pretrain_state)
+    # net = restore_state(net, pretrain_state)
 
     start_time = time.time()
     try:
@@ -187,7 +186,7 @@ def run_test(config):
 
 ################# -------------- Experiments / command generators  -------------- ##################
 
-def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 480_000, experiment = "nostim", tag = None, timestamp = None):
+def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 480_000, experiment = "nostim", downsample = 80,tag = None, timestamp = None):
     seedlist = np.arange(88, 88+ n_seeds)
 
     
@@ -212,6 +211,8 @@ def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 
             f" --simdur {np.float64(simdur)}"
             f" --parent-dir /home/izet/Olivocerebellar-circuit"
             f" --timestamp \"{timestamp}\""
+            f" --timestep 0.5"
+            f" --downsample {downsample}"
             + (f" --tag \"{tag}\"" if tag else "")
         )
 
