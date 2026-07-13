@@ -32,7 +32,17 @@ def base_name(name: str) -> str:
     return re.sub(r'\d+$', '', name)
 
 def remap_inner_keys(old_name: str, new_name: str, node_state: Dict):
+    """
+    Renaming the inner keys of a node's state dictionary to match the new node name.
 
+    args:
+        old_name: The original name of the node (e.g., 'PurkinjeCell13').
+        new_name: The new name of the node (e.g., 'PurkinjeCell2').
+        node_state: The state dictionary of the node, where keys are in the format 'old_name.variable_name'.    
+
+    returns:
+        A new state dictionary with keys renamed to use the new node name.
+    """
 
     if not isinstance(node_state, dict):
         return node_state
@@ -41,20 +51,31 @@ def remap_inner_keys(old_name: str, new_name: str, node_state: Dict):
     prefix_old = old_name + "."
     prefix_new = new_name + "."
 
-    for k, v in node_state.items():
-        if k.startswith(prefix_old):
+    for key, var in node_state.items():
+        if key.startswith(prefix_old):
             # Replace the old prefix with the new one
-            new_key = prefix_new + k[len(prefix_old):]
-            remapped[new_key] = v
+            new_key = prefix_new + key[len(prefix_old):] # Strip the old prefix and add the new one
+            remapped[new_key] = var
         else:
             # Keep keys that don't follow the pattern
-            remapped[k] = v
+            remapped[key] = var
 
     return remapped
 
-    return
-
 def load_state_fixed(target: DynamicalSystem, state_dict: Dict, **kwargs):
+    """
+    Load the state of a DynamicalSystem, remapping node names to match the current network digit suffixes. 
+    The state dictionary values are loaded into the corresponding nodes of the target network.
+
+    Args:
+        target: The DynamicalSystem to load the state into.
+        state_dict: A dictionary containing the state to load, with keys as node names and values as their states.
+    returns:
+        A StateLoadResult object containing lists of missing and unexpected keys. 
+
+
+    
+    """
    
     # Map node names in state_dict to their base names
     state_by_base = {}
