@@ -185,7 +185,7 @@ def build_test_config(args):
 
 
     if args.pretraining_path:
-        pretraining_snapshot_dir = Path(args.pretraining_path)
+       pretraining_state_path = Path(args.pretraining_path)
     else:
         raise ValueError("Pretraining path must be provided for test runs.")
 
@@ -222,7 +222,7 @@ def build_test_config(args):
         "run_params": run_params,
         "run_path": run_path,
         "figures_dir": figures_dir,
-        "pretraining_state_path": pretraining_snapshot_dir
+        "pretraining_state_path": pretraining_state_path
     }
     return config
 

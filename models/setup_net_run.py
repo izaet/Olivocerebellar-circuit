@@ -31,7 +31,7 @@ def init_net_and_runner(net_params=None, dt=0.025 , seed=88, jit=True):
     if net_params is None:
         net_params = {}
 
-    net = CerebellarNetwork(**net_params, name = "CerebellarNetwork9")
+    net = CerebellarNetwork(**net_params)
 
 
     # --- Monitors Configuration --- #

@@ -33,7 +33,7 @@ def get_parent_dir():
         return Path.cwd().parent
     
 
-def save_snapshot(config, state, metadata):
+def save_snapshot(config, state):
     snapshot_path = config['snapshot_path']
     bc.save_pytree(snapshot_path, state)
 
@@ -96,17 +96,23 @@ def run_train(config):
     print(f"Training simulation time taken = {end_time - start_time} s")
 
     start_time = time.time()
+
+    # Save state
     state = bp.save_state(net)
-    save_snapshot(config, state, copy.deepcopy(config))
+    bc.save_pytree(config['snapshot_path'], state)
+
+
+    # Prepare and save data
     data.update(current_net_params)
     data.update(run_params)
     data.update(get_connections(net))
+    
     np.savez(config["run_path"], **data)
     print(f"Saved training runner data to {config['run_path']}")
     end_time = time.time()
     print(f"Training saving time taken: {end_time - start_time} s")
 
-    return net, data, state
+    return net, data, config['snapshot_path']
 
 
 def run_baseline(config):
@@ -146,15 +152,23 @@ def run_test(config):
     downsample = run_params['downsample']
     duration = run_params['simdur']
 
-    pretraining_snapshot_dir = config.get("pretraining_snapshot_dir")
-    if pretraining_snapshot_dir is None:
-        raise ValueError("run_test requires a pretraining_snapshot_dir in config")
-    if not os.path.exists(pretraining_snapshot_dir):
-        raise FileNotFoundError(f"Pretraining snapshot not found: {pretraining_snapshot_dir}")
+    pretraining_state_path = config["pretraining_state_path"]
 
-    pretrain_state = load_snapshot(pretraining_snapshot_dir)
+    if not os.path.exists(pretraining_state_path):
+        raise FileNotFoundError(f"Pretraining state path not found: {pretraining_state_path}")
+
+    start_time = time.time()
     net, runner = init_net_and_runner(current_net_params)
-    # net = restore_state(net, pretrain_state)
+
+    state = bc.load_pytree(pretraining_state_path)
+    result = bp.load_state(net, state)
+    end_time = time.time()
+
+    if result.missing_keys or result.unexpected_keys:
+        raise ValueError(f"State loading failed. Missing keys: {result.missing_keys}, Unexpected keys: {result.unexpected_keys}")  
+
+    print(f"State loading time taken = {end_time - start_time} s")
+
 
     start_time = time.time()
     try:
@@ -168,7 +182,7 @@ def run_test(config):
 
     start_time = time.time()
     state = bp.save_state(net)
-    save_snapshot(config, state, copy.deepcopy(config))
+    
     data.update(current_net_params)
     data.update(run_params)
     data.update(get_connections(net))

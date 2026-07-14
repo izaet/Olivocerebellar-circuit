@@ -50,15 +50,11 @@ def remap_inner_keys(old_name: str, new_name: str, node_state: Dict):
     remapped = {}
     prefix_old = old_name + "."
     prefix_new = new_name + "."
-
-    for key, var in node_state.items():
-        if key.startswith(prefix_old):
-            # Replace the old prefix with the new one
-            new_key = prefix_new + key[len(prefix_old):] # Strip the old prefix and add the new one
-            remapped[new_key] = var
-        else:
-            # Keep keys that don't follow the pattern
-            remapped[key] = var
+    for key, value in node_state.items():
+            if isinstance(key, str) and key.startswith(prefix_old):
+                remapped[prefix_new + key[len(prefix_old):]] = value
+            else:
+                remapped[key] = value
 
     return remapped
 
@@ -72,16 +68,24 @@ def load_state_fixed(target: DynamicalSystem, state_dict: Dict, **kwargs):
         state_dict: A dictionary containing the state to load, with keys as node names and values as their states.
     returns:
         A StateLoadResult object containing lists of missing and unexpected keys. 
-
-
     
     """
+
+    if not isinstance(state_dict, dict):
+        return helpers.load_state(target, state_dict, **kwargs)
+
+    # Clear stale runtime state before loading checkpoint state.
+    try:
+        helpers.reset_state(target)
+        helpers.clear_input(target)
+    except Exception:
+        pass
    
     # Map node names in state_dict to their base names
     state_by_base = {}
     for key in state_dict.keys():
-        b = base_name(key)
-        state_by_base.setdefault(b, []).append(key)
+           if isinstance(key, str):
+                state_by_base.setdefault(base_name(key), []).append(key)
 
 
     nodes = target.nodes().subset(DynamicalSystem).not_subset(DynView).unique()
@@ -89,29 +93,37 @@ def load_state_fixed(target: DynamicalSystem, state_dict: Dict, **kwargs):
     unexpected_keys = []
     
     # Remap outer keys
+    
     for name, node in nodes.items():
-        # Choose which state key to use for this node
         key_to_use = None
+        old_name = None
 
-        # If exact name match exists
+        # 1) Exact name match
         if name in state_dict:
             key_to_use = name
-            old_name= name
+            old_name = name
+
+        # 2) Base-name match
         else:
-            # Try to find a base name match
-            b = base_name(name)
-            if b in state_by_base:
-                keys = state_by_base[b]
-                if len(keys) == 1:
-                    key_to_use = keys[0]
-                    old_name = keys[0]
-                else:
-                    # Ambigous match: multiple saved keys share the same base name
+            candidates = state_by_base.get(base_name(name), [])
+            if len(candidates) == 1:
+                key_to_use = candidates[0]
+                old_name = candidates[0]
+            elif len(candidates) > 1:
+                # Try to pick the most plausible candidate by looking for
+                # variable names that are typical for this node.
+                for cand in candidates:
+                    cand_state = state_dict[cand]
+                    if isinstance(cand_state, dict):
+                        keys = set(cand_state.keys())
+                        if any(k.split(".")[-1] in {"V", "rho", "spike", "I_OU", "I_PC", "I_CN", "I_stim"} for k in keys):
+                            key_to_use = cand
+                            old_name = cand
+                            break
+                if key_to_use is None:
                     missing_keys.append(name)
-                    print(f"[load_state_fixed] Ambiguous base name match for {name}: {keys}")
                     continue
             else:
-                # No matching key at all
                 missing_keys.append(name)
                 continue
 
