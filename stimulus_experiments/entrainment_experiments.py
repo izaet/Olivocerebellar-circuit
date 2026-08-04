@@ -33,10 +33,6 @@ def get_parent_dir():
         return Path.cwd().parent
     
 
-def save_snapshot(config, state):
-    snapshot_path = config['snapshot_path']
-    bc.save_pytree(snapshot_path, state)
-
 
 def load_snapshot(snapshot_dir):
     state_path = os.path.join(snapshot_dir, "_state.bp")
@@ -65,23 +61,50 @@ def get_io_topography (net):
 
     return io_topography
 
+
+
+def force_net_params(net, net_params):
+    
+    net.pf_to_pc_BCM.plasticity_on.value = bm.asarray(net_params['PFPC_plasticity_on'])
+
+    net.stim.stim_io_on.value = bm.asarray(net_params['OU_stim_io_on'])
+    net.stim.stim_pf_on.value = bm.asarray(net_params['OU_stim_pf_on'])
+    net.stim.isi_mean.value = bm.asarray(net_params['OU_stim_isi_mean'])
+    net.stim.isi_std.value = bm.asarray(net_params['OU_stim_isi_std'])
+    net.stim.stim_freq = net_params['OU_stim_freq']
+
+    net.stim.dur_io = net_params['OU_stim_dur_io_mean']
+    net.stim.dur_pf= net_params['OU_stim_dur_pf_mean']
+    net.stim.amp_io = net_params['OU_stim_amp_io_mean']
+    net.stim.amp_pf = net_params['OU_stim_amp_pf_mean']
+
+    return net
+    
+
 def run_train(config):
     current_net_params = config['net_params']
     run_params = config['run_params']
     downsample = run_params['downsample']
     max_runtime = run_params['simdur']
     epoch_time = run_params['epoch_time']
+    conv_thresh_m = run_params['conv_thresh_m']
+    conv_thresh_var = run_params['conv_thresh_var']
+    conv_chunk_thresh = run_params['conv_chunk_thresh']
+   
 
     net, runner = init_net_and_runner(current_net_params)
 
     start_time = time.time()
     try:
-        net, runner, data, d_w_chunk_max, runtime = run_until_convergence(
+        net, runner, data, mean_w_final, var_w_final, runtime = run_until_convergence(
             net,
             runner,
             downsample,
             max_runtime=max_runtime,
             epoch=epoch_time,
+            conv_thresh_m=conv_thresh_m,
+            conv_thresh_var=conv_thresh_var,
+            chunk_thresh=conv_chunk_thresh,
         )
     except Exception as e:
         full_error = traceback.format_exc()
@@ -90,7 +113,7 @@ def run_train(config):
     end_time = time.time()
 
     if runtime < max_runtime:
-        print(f"Converged at t={runtime} ms (max Δw={d_w_chunk_max:.2e})")
+        print(f"Converged at t={runtime} ms (Δmu_w={mean_w_final:.2e}, Δvar_w={var_w_final:.2e})")
     else:
         print(f"Not converged, t={max_runtime} ms")
     print(f"Training simulation time taken = {end_time - start_time} s")
@@ -160,8 +183,10 @@ def run_test(config):
     start_time = time.time()
     net, runner = init_net_and_runner(current_net_params)
 
+    # Load pretraining state
     state = bc.load_pytree(pretraining_state_path)
     result = bp.load_state(net, state)
+    net = force_net_params(net, current_net_params)  # Ensure current net params are applied after loading state
     end_time = time.time()
 
     if result.missing_keys or result.unexpected_keys:
@@ -181,7 +206,6 @@ def run_test(config):
     print(f"Test simulation time taken = {end_time - start_time} s")
 
     start_time = time.time()
-    state = bp.save_state(net)
     
     data.update(current_net_params)
     data.update(run_params)
@@ -191,7 +215,7 @@ def run_test(config):
     end_time = time.time()
     print(f"Test saving time taken: {end_time - start_time} s")
 
-    return net, data, state
+    return net, data
 
 
 
@@ -199,6 +223,8 @@ def run_test(config):
 
 
 ################# -------------- Experiments / command generators  -------------- ##################
+
+def run_splitter():
 
 def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 480_000, experiment = "nostim", downsample = 80,tag = None, timestamp = None):
     seedlist = np.arange(88, 88+ n_seeds)

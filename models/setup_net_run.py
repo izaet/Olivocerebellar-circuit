@@ -53,15 +53,18 @@ def run_simulation(net, runner, duration, downsample= 30):
 
 
     
-def run_until_convergence(net, runner, downsample= 30, max_runtime = 500_000, epoch =  1000, conv_thresh= 1e-4, chunk_thresh = 3):
+def run_until_convergence(net, runner, downsample= 30, max_runtime = 500_000, epoch =  250, conv_thresh_m= 0.1, conv_thresh_var = 0.2, chunk_thresh = 1):
+    """
+    Run the network until PF-PC synapse weights converge. Convergence is defined as the stabilization of the mean andvariance of all synapse weights.
+    """
     net.pf_to_pc_BCM.plasticity_on.value= bm.asarray(True)
 
 
     runtime= 0.0
-    w_previous = net.pf_to_pc_BCM.weights_per_conn.value
-
+    mean_w_previous = np.mean(net.pf_to_pc_BCM.weights_per_conn.value )
+    var_w_previous = np.var(net.pf_to_pc_BCM.weights_per_conn.value)
     stable_count = 0
-
+  
     mon_hist = {}
 
     while runtime < max_runtime:
@@ -76,28 +79,30 @@ def run_until_convergence(net, runner, downsample= 30, max_runtime = 500_000, ep
             else:
                 mon_hist[k].append(np.array(runner.mon[k][::downsample])) 
 
-        # Check for convergence
+        # Check for convergence via mean and variance of synapse weights
         w_current = net.pf_to_pc_BCM.weights_per_conn.value
-        d_w_chunk_max = np.max(np.abs(w_current - w_previous))
+        mean_w_current = np.mean(w_current)
+        var_w_current = np.var(w_current)
 
-        # mean_w_current = np.mean(runner.mon['pf_to_pc_BCM.weights_per_conn'], axis 
-        # d_w_chunk_max = np.max(np.abs(mean_w_current - mean_w_previous))
+        d_mean= np.abs(mean_w_current - mean_w_previous)
+        d_var = np.abs(var_w_current - var_w_previous)
 
-        if d_w_chunk_max < conv_thresh:
+        if d_mean < conv_thresh_m and d_var < conv_thresh_var:
             stable_count+= 1
         else:
             stable_count = 0
         
-        if stable_count > chunk_thresh:
+        if stable_count >= chunk_thresh:
             break
         
-        w_previous = w_current
+        mean_w_previous = mean_w_current
+        var_w_previous = var_w_current
 
     # Combine all chunks into one runner
     full_mon = {k: np.concatenate (v, axis = 0) for k, v in mon_hist.items()}
             
         
-    return net, runner, full_mon, d_w_chunk_max, runtime
+    return net, runner, full_mon, mean_w_current, var_w_current, runtime
 
     
 def init_and_run(duration=1000.0, dt=0.025, net_params=None, seed=42, jit=True):

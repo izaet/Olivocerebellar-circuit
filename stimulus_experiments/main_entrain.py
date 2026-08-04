@@ -56,8 +56,10 @@ def parse_args(arg_list= None):
     parser.add_argument('--simdur', type=float, default=10_000.0, help='(Maximum) simulation time')
     parser.add_argument("--dt", type=float, default=0.025,  help="Integration time-step (ms)")
     parser.add_argument("--downsample", type=int, default= 40)
-    parser.add_argument("--epoch-time", type = int, default = 1000, help= "Duration of epochs to check convergence over (ms)")
-    
+    parser.add_argument("--epoch-time", type = int, default = 250, help= "Duration of epochs to check convergence over (ms)")
+    parser.add_argument("--conv-thresh-m", type=float, default=0.1, help="Convergence threshold for mean weight change per epoch")
+    parser.add_argument("--conv-thresh-var", type=float, default=0.2, help="Convergence threshold for variance weight change per epoch")
+    parser.add_argument("--conv-chunk-thresh", type=int, default=2, help="Number of consecutive epochs that must satisfy convergence thresholds")
 
     # --------------------- Directories / naming ---------------------
 
@@ -129,10 +131,12 @@ def build_train_config(args):
 
     net_params = {
         "PFPC_plasticity_on": args.PFPC_plasticity_on, 
+        
         "OU_stim_pf_on": args.OU_stim_pf_on,
         "OU_stim_io_on": args.OU_stim_io_on,
 
         "OU_stim_isi_mean": args.OU_stim_isi_mean,
+        "OU_stim_isi_std": args.OU_stim_isi_std,
         "OU_stim_freq": args.OU_stim_freq,
         "OU_stim_start": args.OU_stim_start,
         "OU_stim_amp_io_mean": args.OU_stim_amp_io_mean,
@@ -151,7 +155,10 @@ def build_train_config(args):
         "dt": args.dt,
         "downsample": args.downsample,
         "simdur": args.simdur,
-        "epoch_time": args.epoch_time
+        "epoch_time": args.epoch_time,
+        "conv_thresh_m": args.conv_thresh_m,
+        "conv_thresh_var": args.conv_thresh_var,
+        "conv_chunk_thresh": args.conv_chunk_thresh,
     }
 
     config = {
@@ -196,6 +203,7 @@ def build_test_config(args):
         "PFPC_plasticity_on": args.PFPC_plasticity_on,
         "OU_stim_pf_on": args.OU_stim_pf_on,
         "OU_stim_io_on": args.OU_stim_io_on,
+        
         "OU_stim_isi_mean": args.OU_stim_isi_mean,
         "OU_stim_isi_std": args.OU_stim_isi_std,
         "OU_stim_freq": args.OU_stim_freq,

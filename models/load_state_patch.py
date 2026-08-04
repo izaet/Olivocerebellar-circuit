@@ -23,13 +23,32 @@ state['PurkinjeCell13'] == {
 }
 
 """
+def numeric_suffix(name: str):
+    m = re.search(r"(\d+)$", name)
+    return int(m.group(1)) if m else -1
 
-def base_name(name: str) -> str:
+def base_name(name: str):
     """Strip digits from a BrainPy node name.
 
     e.g. 'PurkinjeCell2' -> 'PurkinjeCell'
     """
-    return re.sub(r'\d+$', '', name)
+    return re.sub(r'\d+$', '', name) # Substitute suffix with empty string
+
+def node_signature_variables(node_state: Dict):
+    """
+    Obtain a signature of the node's state dictionary, including the variable names, their shapes/dtypes and the order of variables."""
+    if not isinstance(node_state, dict):
+        return None
+    
+    items = []
+    for key, value in sorted(node_state.items()):
+        suffix = key.split(".", 1)[-1]
+        if hasattr(value, "shape"):
+            items.append((suffix, tuple(value.shape), str(getattr(value, "dtype", None))))
+        else:
+            items.append((suffix, type(value).__name__))
+    return tuple(items)
+
 
 def remap_inner_keys(old_name: str, new_name: str, node_state: Dict):
     """
@@ -48,11 +67,11 @@ def remap_inner_keys(old_name: str, new_name: str, node_state: Dict):
         return node_state
 
     remapped = {}
-    prefix_old = old_name + "."
-    prefix_new = new_name + "."
+    old_prefix = old_name + "."
+    new_prefix = new_name + "."
     for key, value in node_state.items():
-            if isinstance(key, str) and key.startswith(prefix_old):
-                remapped[prefix_new + key[len(prefix_old):]] = value
+            if isinstance(key, str) and key.startswith(old_prefix):
+                remapped[new_prefix + key[len(old_prefix):]] = value
             else:
                 remapped[key] = value
 
@@ -74,7 +93,7 @@ def load_state_fixed(target: DynamicalSystem, state_dict: Dict, **kwargs):
     if not isinstance(state_dict, dict):
         return helpers.load_state(target, state_dict, **kwargs)
 
-    # Clear stale runtime state before loading checkpoint state.
+    # Clear current network state and inputs 
     try:
         helpers.reset_state(target)
         helpers.clear_input(target)
@@ -82,51 +101,65 @@ def load_state_fixed(target: DynamicalSystem, state_dict: Dict, **kwargs):
         pass
    
     # Map node names in state_dict to their base names
-    state_by_base = {}
-    for key in state_dict.keys():
-           if isinstance(key, str):
-                state_by_base.setdefault(base_name(key), []).append(key)
+    node_by_base = {}
+    node_signatures = {}
 
+    for key, variables in state_dict.items():
+        if not isinstance(key, str):
+            continue
+        base = base_name(key)
+        node_by_base.setdefault(base, []).append(key)
+        node_signatures[key] = node_signature_variables(variables)
 
     nodes = target.nodes().subset(DynamicalSystem).not_subset(DynView).unique()
     missing_keys = []
     unexpected_keys = []
     
     # Remap outer keys
-    
     for name, node in nodes.items():
         key_to_use = None
         old_name = None
 
-        # 1) Exact name match
+        
+        # Exact name match
         if name in state_dict:
             key_to_use = name
             old_name = name
 
-        # 2) Base-name match
+        # Base-name match
         else:
-            candidates = state_by_base.get(base_name(name), [])
+            candidates = node_by_base.get(base_name(name), [])
             if len(candidates) == 1:
                 key_to_use = candidates[0]
                 old_name = candidates[0]
+
+            # When there are multiple node-base matches
             elif len(candidates) > 1:
-                # Try to pick the most plausible candidate by looking for
-                # variable names that are typical for this node.
-                for cand in candidates:
-                    cand_state = state_dict[cand]
-                    if isinstance(cand_state, dict):
-                        keys = set(cand_state.keys())
-                        if any(k.split(".")[-1] in {"V", "rho", "spike", "I_OU", "I_PC", "I_CN", "I_stim"} for k in keys):
-                            key_to_use = cand
-                            old_name = cand
-                            break
-                if key_to_use is None:
-                    missing_keys.append(name)
-                    continue
-            else:
+
+                 # Compare node class/types aka signatures
+                target_sig = node_signature_variables(node.save_state())
+                matches = [cand for cand in candidates if node_signatures.get(cand) == target_sig]
+
+                if len(matches) == 1:
+                    key_to_use = matches[0]
+                    old_name = matches[0]
+
+                # Fallback to matching by ordering of nodes 
+                else: 
+                    sorted_candidates = sorted(candidates, key=numeric_suffix)
+                    same_base_nodes = [n for n in nodes if base_name(n) == base_name(name)]    
+
+                    if len(sorted_candidates) == len(same_base_nodes):
+                        idx = sorted(same_base_nodes, key= numeric_suffix).index(name)
+
+                        key_to_use = sorted_candidates[idx]
+                        old_name = key_to_use
+
+
+            if key_to_use is None:
                 missing_keys.append(name)
                 continue
-
+        
         # Remap inner keys to new name
         node_state_raw = state_dict[key_to_use]
         node_state = remap_inner_keys(old_name, name, node_state_raw)
