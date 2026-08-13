@@ -48,7 +48,7 @@ def parse_args(arg_list= None):
                     help="Number of inferior olive cells")
     
 
-    parser.add_argument("--monitor-preset", type=str, default="neuron_min", choices=["plasticity_full", "plasticity_min", "neuron_min", "stimulus", "neuron_spike"], help="Which set of monitors to use.")
+    parser.add_argument("--monitor-preset", type=str, default="neuron_min", choices=["plasticity_full", "plasticity_min", "neuron_min", "stimulus", "neuron_spike", "stimulus_testing"], help="Which set of monitors to use.")
 
 
     # -------------------- Run parameters ------------------------------

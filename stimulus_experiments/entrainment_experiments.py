@@ -23,6 +23,7 @@ from models.setup_net_run import init_net_and_runner, run_until_convergence, run
 
 # - command generator function for all testing (+pretraining) conditions
 
+CLUSTER_PARENT_DIR = "/home/izet/Olivocerebellar-circuit"
 
 
 ### ------------- General running functions ---------------####
@@ -222,8 +223,8 @@ def run_test(config):
 
 def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 480_000, experiment = "nostim", downsample = 80,tag = None):
     seedlist = np.arange(88, 88+ n_seeds)
-    
-    parent_dir = Path(parent_dir)
+
+    parent_dir = Path(CLUSTER_PARENT_DIR)
     tag = f"_{tag}" if tag else ""
     results_dir = parent_dir / "results" / f"stim_experiments_baseline_{experiment}_{tag}"
     figures_dir = parent_dir / "figures" / f"figs_baseline_{experiment}_{tag}"
@@ -240,7 +241,7 @@ def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 
             f" --seed {seed}"
             f" --monitor-preset \"{monitor}\""
             f" --simdur {np.float64(simdur)}"
-            f" --parent-dir /home/izet/Olivocerebellar-circuit"
+            f" --parent-dir {CLUSTER_PARENT_DIR}"
             f" --timestep 0.5"
             f" --downsample {downsample}"
             + (f" --tag \"{tag}\"" if tag else "")
@@ -288,7 +289,7 @@ def train_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=No
     else:
         ISI_values = np.atleast_1d(ISI_values)
     
-    parent_dir = Path(parent_dir)
+    parent_dir = Path(CLUSTER_PARENT_DIR)
    
     tag = f"_{tag}" if tag else ""
     results_dir = parent_dir / "results" / f"stim_experiments_train_{experiment}_{tag}"
@@ -310,7 +311,7 @@ def train_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=No
                 f" --seed {seed}"
                 f" --monitor-preset \"{monitor}\""
                 f" --simdur {np.float64(simdur)}"
-                f" --parent-dir {str(parent_dir)}"
+                f" --parent-dir {CLUSTER_PARENT_DIR}"
                 f" --OU-stim-isi-mean {ISI}"
                 f" --OU-stim-isi-std {ISI_std}"
                 + (f" --tag \"{tag}\"" if tag else "")
@@ -318,14 +319,14 @@ def train_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=No
             
             if experiment == "variable-isi":
                 command = command.replace("--PFPC_plasticity-on True", 
-                                        "--PFPC_plasticity-on True --OU-stim-io-on True --OU-stim-pf-on True --OU-stim-isi-std {ISI_std} --OU-stim-isi-mean {ISI}")
+                                        f"--PFPC_plasticity-on True --OU-stim-io-on True --OU-stim-pf-on True --OU-stim-isi-std {ISI_std} --OU-stim-isi-mean {ISI}")
             
             elif experiment == "fixed-isi":
                 command = command.replace("--PFPC_plasticity-on True", 
-                                        "--PFPC_plasticity-on True --OU-stim-io-on True --OU-stim-pf-on True --OU-stim-isi-mean {ISI}")
+                                        f"--PFPC_plasticity-on True --OU-stim-io-on True --OU-stim-pf-on True --OU-stim-isi-mean {ISI}")
             elif experiment == "nostim":
                 command = command.replace("--PFPC_plasticity-on True", 
-                                        "--PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False")
+                                        f"--PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False")
             
             jobs.append({
                 "command": command,
@@ -383,7 +384,7 @@ def test_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=Non
     else:
         ISI_values = np.atleast_1d(ISI_values)
     
-    parent_dir = Path(parent_dir)
+    parent_dir = Path(CLUSTER_PARENT_DIR)
     tag = f"_{tag}" if tag else ""
     test_results_root = parent_dir / "results" / f"stim_experiments_test_{experiment}_{tag}"
     test_figures_root = parent_dir / "figures" / f"figs_test_{experiment}_{tag}"
@@ -435,7 +436,7 @@ def test_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=Non
                     f" --seed {test_seed}"
                     f" --monitor-preset \"{monitor}\""
                     f" --simdur {np.float64(simdur)}"
-                    f" --parent-dir {str(parent_dir)}"
+                    f" --parent-dir {CLUSTER_PARENT_DIR}"
                     f" --pretraining-path \"{pretrain_snapshot_path}\""
                     + (f" --tag \"{tag}\"" if tag else "")
                 )
