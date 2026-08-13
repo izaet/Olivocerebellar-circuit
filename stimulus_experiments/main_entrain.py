@@ -56,10 +56,10 @@ def parse_args(arg_list= None):
     parser.add_argument('--simdur', type=float, default=10_000.0, help='(Maximum) simulation time')
     parser.add_argument("--dt", type=float, default=0.025,  help="Integration time-step (ms)")
     parser.add_argument("--downsample", type=int, default= 40)
-    parser.add_argument("--epoch-time", type = int, default = 250, help= "Duration of epochs to check convergence over (ms)")
+    parser.add_argument("--epoch-time", type = int, default = 350, help= "Duration of epochs to check convergence over (ms)")
     parser.add_argument("--conv-thresh-m", type=float, default=0.1, help="Convergence threshold for mean weight change per epoch")
     parser.add_argument("--conv-thresh-var", type=float, default=0.2, help="Convergence threshold for variance weight change per epoch")
-    parser.add_argument("--conv-chunk-thresh", type=int, default=2, help="Number of consecutive epochs that must satisfy convergence thresholds")
+    parser.add_argument("--conv-chunk-thresh", type=int, default=1, help="Number of consecutive epochs that must satisfy convergence thresholds")
 
     # --------------------- Directories / naming ---------------------
 
@@ -76,12 +76,7 @@ def parse_args(arg_list= None):
         help="Optional tag appended to result/state/figure folder names.",
     )
 
-    parser.add_argument(
-        "--timestamp",
-        type=str,
-        default=None,
-        help="Optional fixed timestamp used for deterministic output folder names.",
-    )
+   
 
     parser.add_argument(
     "--pretraining-path",
@@ -100,7 +95,7 @@ def parse_args(arg_list= None):
     )
     parser.add_argument(
         "--experiment",
-        choices=["specific-isi", "random-isi", "nostim"],
+        choices=["fixed-isi", "variable-isi", "nostim"],
         required=True,
         help="Stimulus protocol / task.",
     )
@@ -113,21 +108,20 @@ def build_train_config(args):
     else:
         parent_dir = Path(args.parent_dir)
 
-    timestamp = args.timestamp if args.timestamp else time.strftime('%m-%d_%H;%M;%S')
     tag = f"_{args.tag}" if args.tag else ""
 
     results_dir = parent_dir / "results" / f"stim_experiments_train_{args.experiment}_mon_{args.monitor_preset}_{tag}"
-    snapshot_dir = parent_dir / "states" / f"states_{args.experiment}_{tag}"
+    fin_state_dir = parent_dir / "states" / f"fin_states_{args.experiment}_{tag}"
     figures_dir = parent_dir / "figures" / f"figs_train_{args.experiment}_{tag}"
 
-    for d in (results_dir, snapshot_dir, figures_dir):
+    for d in (results_dir, fin_state_dir, figures_dir):
         d.mkdir(parents=True, exist_ok=True)
 
     run_fname = (f"{args.run_type}_{args.experiment}"f"_isi{args.OU_stim_isi_mean:.1f}_isi_std{args.OU_stim_isi_std:.1f}seed{args.seed}_simdur{args.simdur}.npz")
     run_path = results_dir / run_fname
 
-    snapshot_fname = (f"{args.experiment}"f"_isi{args.OU_stim_isi_mean:.1f}_isi_std{args.OU_stim_isi_std:.1f}_seed{args.seed}_simdur{args.simdur}_state.bp")
-    snapshot_path = snapshot_dir / snapshot_fname
+    fin_state_fname = (f"{args.experiment}"f"_isi{args.OU_stim_isi_mean:.1f}_isi_std{args.OU_stim_isi_std:.1f}_seed{args.seed}_simdur{args.simdur}_state.bp")
+    fin_state_path = fin_state_dir / fin_state_fname
 
     net_params = {
         "PFPC_plasticity_on": args.PFPC_plasticity_on, 
@@ -165,7 +159,7 @@ def build_train_config(args):
         "net_params": net_params,
         "run_params": run_params,
        
-        "snapshot_path": snapshot_path,
+        "fin_state_path": fin_state_path,
         "run_path": run_path,
         "figures_dir": figures_dir,
 
@@ -179,25 +173,23 @@ def build_test_config(args):
     else:
         parent_dir = Path(args.parent_dir)
 
-    timestamp = args.timestamp if args.timestamp else time.strftime('%m-%d_%H;%M;%S')
     tag = f"_{args.tag}" if args.tag else ""
 
-   
-    results_dir = parent_dir / "results" / f"stim_experiments_test_{args.experiment}_mon_{args.monitor_preset}_{tag}"
-    
-    figures_dir = parent_dir / "figures" / f"figs_test_{args.experiment}_{tag}"
-
-    for d in (results_dir, figures_dir):
-        d.mkdir(parents=True, exist_ok=True)
-
-
     if args.pretraining_path:
-       pretraining_state_path = Path(args.pretraining_path)
+        pretraining_state_path = Path(args.pretraining_path)
     else:
         raise ValueError("Pretraining path must be provided for test runs.")
 
-    run_fname = f"test_{args.experiment}_seed{args.seed}_simdur{args.simdur}.npz"
-    run_path = results_dir / run_fname
+    pretraining_label = pretraining_state_path.stem.replace("_state", "")
+    test_results_root = parent_dir / "results" / f"stim_experiments_test_{args.experiment}_mon_{args.monitor_preset}_{tag}"
+    test_results_dir = test_results_root / pretraining_label
+    test_figures_dir = parent_dir / "figures" / f"figs_test_{args.experiment}_{tag}" / pretraining_label
+
+    for d in (test_results_dir, test_figures_dir):
+        d.mkdir(parents=True, exist_ok=True)
+
+    run_fname = f"test_{args.experiment}_{pretraining_label}_seed{args.seed}_simdur{args.simdur}.npz"
+    run_path = test_results_dir / run_fname
 
     net_params = {
         "PFPC_plasticity_on": args.PFPC_plasticity_on,
@@ -229,7 +221,7 @@ def build_test_config(args):
         "net_params": net_params,
         "run_params": run_params,
         "run_path": run_path,
-        "figures_dir": figures_dir,
+        "figures_dir": test_figures_dir,
         "pretraining_state_path": pretraining_state_path
     }
     return config
@@ -241,7 +233,6 @@ def build_baseline_config(args):
     else:
         parent_dir = Path(args.parent_dir)
 
-    timestamp = args.timestamp if args.timestamp else time.strftime('%m-%d_%H;%M:%S')
     tag = f"_{args.tag}" if args.tag else ""
 
     results_dir = parent_dir / "results" / f"stim_experiments_baseline_{args.experiment}_mon_{args.monitor_preset}_{tag}"

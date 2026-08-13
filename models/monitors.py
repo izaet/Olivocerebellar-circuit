@@ -44,6 +44,25 @@ def  neuron_spike_mon(net):
         "io.spike": net.io.neurons.spike
     }
 
+def stimulus_testing_mon(net):
+    return {
+        "stim.isi": net.stim.current_isi,
+
+        # Monitors for stimulus effect on neurons
+        "pf.I_OU": net.pf.I_OU, 
+
+        "pc.rho": net.pc.rho,
+        "pc.spike": net.pc.spike,
+        "pc.V": net.pc.V,
+
+        "io.I_OU": net.io.neurons.I_OU,
+        "io.V_soma": net.io.neurons.V_soma,
+        "io.spike": net.io.neurons.spike,
+   
+
+        # Monitors for plasticity 
+        "pfpc_weights": net.pf_to_pc_BCM.weights_per_conn,
+    }
 def training_monitors(net):
     return{}
 
@@ -56,6 +75,7 @@ monitor_presets = {
     "neuron_min": neuron_pot_mon,
     "stimulus": stimulus_mon,
     "neuron_spike": neuron_spike_mon,
+    "stimulus_testing": stimulus_testing_mon,
 }   
 
 

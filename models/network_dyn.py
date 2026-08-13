@@ -40,7 +40,7 @@ class PFBundles(bp.dyn.NeuDyn):
         self.I_OU = bm.Variable(bm.ones(self.num) * self.I_OU0)  # shape: (num_pf,)
         self.rho = bm.Variable(bm.asarray(bm.abs(self.I_OU.value - self.I_OU0)/1000))
 
-         # Stimulus input
+        # Stimulus input
         self.I_stim = bm.Variable(bm.zeros(self.num))
 
 
