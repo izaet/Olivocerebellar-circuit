@@ -30,8 +30,8 @@ def parse_args(arg_list= None):
     parser.add_argument("--OU-stim-start",  type=float, default=200.0, help='')
     parser.add_argument("--OU-stim-amp-io-mean",  type=float, default=1.4, help='')
     parser.add_argument("--OU-stim-amp-pf-mean",  type=float, default=1.4, help='')
-    parser.add_argument("--OU-stim-dur-io-mean",  type=float, default=250.0, help='')
-    parser.add_argument("--OU-stim-dur-pf-mean",  type= float, default=250.0, help='')
+    parser.add_argument("--OU-stim-dur-io-mean",  type=float, default=50.0, help='')
+    parser.add_argument("--OU-stim-dur-pf-mean",  type= float, default=50.0, help='')
 
     parser.add_argument("--OU-stim-io-on", type=bool, default = True, help= 'Turn IO stimulus on/off')
     parser.add_argument("--OU-stim-pf-on", type=bool, default = True, help= 'Turn IO stimulus on/off')
