@@ -26,12 +26,19 @@ from models.setup_net_run import init_net_and_runner, run_until_convergence, run
 CLUSTER_PARENT_DIR = "/home/izet/Olivocerebellar-circuit"
 
 
+def resolve_parent_dir(parent_dir=None):
+    if parent_dir is None:
+        return Path(CLUSTER_PARENT_DIR)
+
+    parent_dir = str(parent_dir)
+    if parent_dir.startswith(("c:", "C:")) or "\\" in parent_dir:
+        return Path(CLUSTER_PARENT_DIR)
+    return Path(parent_dir)
+
+
 ### ------------- General running functions ---------------####
 def get_parent_dir():
-    try:
-        return Path(__file__).resolve().parent.parent
-    except NameError:
-        return Path.cwd().parent
+    return resolve_parent_dir()
     
 
 def get_connections(net):
@@ -224,7 +231,7 @@ def run_test(config):
 def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 480_000, experiment = "nostim", downsample = 80,tag = None):
     seedlist = np.arange(88, 88+ n_seeds)
 
-    parent_dir = Path(parent_dir) if parent_dir is not None else Path(get_parent_dir())
+    parent_dir = resolve_parent_dir(parent_dir)
     tag = f"_{tag}" if tag else ""
     results_dir = parent_dir / "results" / f"stim_experiments_baseline_{experiment}_{tag}"
     figures_dir = parent_dir / "figures" / f"figs_baseline_{experiment}_{tag}"
@@ -289,7 +296,7 @@ def train_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=No
     else:
         ISI_values = np.atleast_1d(ISI_values)
     
-    parent_dir = Path(parent_dir) if parent_dir is not None else Path(get_parent_dir())
+    parent_dir = resolve_parent_dir(parent_dir)
    
     tag = f"_{tag}" if tag else ""
     results_dir = parent_dir / "results" / f"stim_experiments_train_{experiment}_{tag}"

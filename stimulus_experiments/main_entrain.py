@@ -14,6 +14,7 @@ from stimulus_experiments.entrainment_experiments import (
     run_baseline,
     run_test,
     get_parent_dir,
+    resolve_parent_dir,
 )
 
 
@@ -103,10 +104,7 @@ def parse_args(arg_list= None):
     return parser.parse_args(arg_list)
 
 def build_train_config(args):
-    if args.parent_dir is None:
-        parent_dir = Path(get_parent_dir())
-    else:
-        parent_dir = Path(args.parent_dir)
+    parent_dir = resolve_parent_dir(args.parent_dir)
 
     tag = f"_{args.tag}" if args.tag else ""
 
@@ -168,19 +166,17 @@ def build_train_config(args):
 
 
 def build_test_config(args):
-    if args.parent_dir is None:
-        parent_dir = Path(get_parent_dir())
-    else:
-        parent_dir = Path(args.parent_dir)
+    parent_dir = resolve_parent_dir(args.parent_dir)
 
     tag = f"_{args.tag}" if args.tag else ""
 
     if args.pretraining_path:
-        pretraining_state_path = str(Path(args.pretraining_path))
+        pretraining_state_path_obj = Path(args.pretraining_path)
+        pretraining_state_path = str(pretraining_state_path_obj)
     else:
         raise ValueError("Pretraining path must be provided for test runs.")
 
-    pretraining_label = pretraining_state_path.stem.replace("_state", "")
+    pretraining_label = pretraining_state_path_obj.stem.replace("_state", "")
     test_results_root = parent_dir / "results" / f"stim_experiments_test_{args.experiment}_mon_{args.monitor_preset}_{tag}"
     test_results_dir = test_results_root / pretraining_label
     test_figures_dir = parent_dir / "figures" / f"figs_test_{args.experiment}_{tag}" / pretraining_label
@@ -228,10 +224,7 @@ def build_test_config(args):
 
 
 def build_baseline_config(args):
-    if args.parent_dir is None:
-        parent_dir = Path(get_parent_dir())
-    else:
-        parent_dir = Path(args.parent_dir)
+    parent_dir = resolve_parent_dir(args.parent_dir)
 
     tag = f"_{args.tag}" if args.tag else ""
 
