@@ -121,7 +121,7 @@ def build_train_config(args):
     run_path = results_dir / run_fname
 
     fin_state_fname = (f"{args.experiment}"f"_isi{args.OU_stim_isi_mean:.1f}_isi_std{args.OU_stim_isi_std:.1f}_seed{args.seed}_simdur{args.simdur}_state.bp")
-    fin_state_path = fin_state_dir / fin_state_fname
+    fin_state_path = str(fin_state_dir / fin_state_fname)
 
     net_params = {
         "PFPC_plasticity_on": args.PFPC_plasticity_on, 
@@ -176,7 +176,7 @@ def build_test_config(args):
     tag = f"_{args.tag}" if args.tag else ""
 
     if args.pretraining_path:
-        pretraining_state_path = Path(args.pretraining_path)
+        pretraining_state_path = str(Path(args.pretraining_path))
     else:
         raise ValueError("Pretraining path must be provided for test runs.")
 

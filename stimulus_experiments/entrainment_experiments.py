@@ -116,7 +116,7 @@ def run_train(config):
 
     # Save state
     state = bp.save_state(net)
-    bc.save_pytree(config['fin_state_path'], state)
+    bc.save_pytree(str(config['fin_state_path']), state)
 
 
     # Prepare and save data
@@ -169,7 +169,7 @@ def run_test(config):
     downsample = run_params['downsample']
     duration = run_params['simdur']
 
-    pretraining_state_path = config["pretraining_state_path"]
+    pretraining_state_path = str(config["pretraining_state_path"])
 
     if not os.path.exists(pretraining_state_path):
         raise FileNotFoundError(f"Pretraining state path not found: {pretraining_state_path}")
