@@ -46,7 +46,10 @@ def  neuron_spike_mon(net):
 
 def stimulus_testing_mon(net):
     return {
+        # Monitors for stimuli
         "stim.isi": net.stim.current_isi,
+        "stim_pf_start": net.stim.stim_pf_start,
+        "stim_io_start": net.stim.stim_io_start,
 
         # Monitors for stimulus effect on neurons
         "pf.I_OU": net.pf.I_OU, 

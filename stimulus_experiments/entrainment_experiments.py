@@ -224,7 +224,7 @@ def run_test(config):
 def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 480_000, experiment = "nostim", downsample = 80,tag = None):
     seedlist = np.arange(88, 88+ n_seeds)
 
-    parent_dir = Path(CLUSTER_PARENT_DIR)
+    parent_dir = Path(parent_dir) if parent_dir is not None else Path(get_parent_dir())
     tag = f"_{tag}" if tag else ""
     results_dir = parent_dir / "results" / f"stim_experiments_baseline_{experiment}_{tag}"
     figures_dir = parent_dir / "figures" / f"figs_baseline_{experiment}_{tag}"
@@ -289,7 +289,7 @@ def train_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=No
     else:
         ISI_values = np.atleast_1d(ISI_values)
     
-    parent_dir = Path(CLUSTER_PARENT_DIR)
+    parent_dir = Path(parent_dir) if parent_dir is not None else Path(get_parent_dir())
    
     tag = f"_{tag}" if tag else ""
     results_dir = parent_dir / "results" / f"stim_experiments_train_{experiment}_{tag}"
@@ -384,7 +384,7 @@ def test_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=Non
     else:
         ISI_values = np.atleast_1d(ISI_values)
     
-    parent_dir = Path(CLUSTER_PARENT_DIR)
+    parent_dir = Path(parent_dir) if parent_dir is not None else Path(get_parent_dir())
     tag = f"_{tag}" if tag else ""
     test_results_root = parent_dir / "results" / f"stim_experiments_test_{experiment}_{tag}"
     test_figures_root = parent_dir / "figures" / f"figs_test_{experiment}_{tag}"
