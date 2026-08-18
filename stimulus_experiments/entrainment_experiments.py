@@ -26,19 +26,12 @@ from models.setup_net_run import init_net_and_runner, run_until_convergence, run
 CLUSTER_PARENT_DIR = "/home/izet/Olivocerebellar-circuit"
 
 
-def resolve_parent_dir(parent_dir=None):
-    if parent_dir is None:
-        return Path(CLUSTER_PARENT_DIR)
-
-    parent_dir = str(parent_dir)
-    if parent_dir.startswith(("c:", "C:")) or "\\" in parent_dir:
-        return Path(CLUSTER_PARENT_DIR)
-    return Path(parent_dir)
-
-
 ### ------------- General running functions ---------------####
 def get_parent_dir():
-    return resolve_parent_dir()
+    try:
+        return Path(__file__).resolve().parent.parent
+    except NameError:
+        return Path.cwd().parent
     
 
 def get_connections(net):
@@ -228,12 +221,12 @@ def run_test(config):
 # def run_splitter():
 #     return []
 
-def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 480_000, experiment = "nostim", downsample = 80,tag = None):
+def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 480_000, experiment = "nostim", downsample = 80,tag = None, plasticity_on = True, stim_io_on = False, stim_pf_on = False, stim_isi_mean = 120.0, stim_isi_std = 0.0):
     seedlist = np.arange(88, 88+ n_seeds)
 
-    parent_dir = resolve_parent_dir(parent_dir)
+    parent_dir = Path(parent_dir) if parent_dir is not None else Path(get_parent_dir())
     tag = f"_{tag}" if tag else ""
-    results_dir = parent_dir / "results" / f"stim_experiments_baseline_{experiment}_{tag}"
+    results_dir = parent_dir / "results" / f"stim_experiments_baseline_{experiment}_mon_{monitor}_{tag}"
     figures_dir = parent_dir / "figures" / f"figs_baseline_{experiment}_{tag}"
     jobs = []
 
@@ -251,6 +244,7 @@ def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 
             f" --parent-dir {CLUSTER_PARENT_DIR}"
             f" --timestep 0.5"
             f" --downsample {downsample}"
+
             + (f" --tag \"{tag}\"" if tag else "")
         )
 
@@ -296,10 +290,10 @@ def train_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=No
     else:
         ISI_values = np.atleast_1d(ISI_values)
     
-    parent_dir = resolve_parent_dir(parent_dir)
+    parent_dir = Path(parent_dir) if parent_dir is not None else Path(get_parent_dir())
    
     tag = f"_{tag}" if tag else ""
-    results_dir = parent_dir / "results" / f"stim_experiments_train_{experiment}_{tag}"
+    results_dir = parent_dir / "results" / f"stim_experiments_train_{experiment}_mon_{monitor}_{tag}"
     figures_dir = parent_dir / "figures" / f"figs_train_{experiment}_{tag}"
     fin_state_dir = parent_dir / "states" / f"states_{experiment}_{tag}"
     jobs = []
@@ -309,7 +303,8 @@ def train_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=No
            
             fin_state_fname = (f"{experiment}"f"_isi{ISI:.1f}_isi_std{ISI_std:.1f}_seed{seed}_simdur{simdur}_state.bp")
             fin_state_path = fin_state_dir / fin_state_fname
-            run_fname = f"train_{experiment}_isi{ISI:.1f}_seed{seed}_simdur{np.float64(simdur)}.npz"
+            # match main_entrain naming: run_type_experiment_isi{:.1f}_isi_std{:.1f}seed{seed}_simdur{simdur}.npz
+            run_fname = f"train_{experiment}_isi{ISI:.1f}_isi_std{ISI_std:.1f}seed{seed}_simdur{np.float64(simdur)}.npz"
             run_path = results_dir / run_fname
             
             command = (
@@ -349,7 +344,7 @@ def train_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=No
 
 
 def test_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=None, ISI_std=None, experiment="fixed-isi", 
-                  pretraining_snapshot_paths=None, tag=None):
+                  pretraining_snapshot_paths=None, tag=None, plast):
     """
     Generate test commands with structured job information.
     
@@ -393,7 +388,7 @@ def test_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=Non
     
     parent_dir = Path(parent_dir) if parent_dir is not None else Path(get_parent_dir())
     tag = f"_{tag}" if tag else ""
-    test_results_root = parent_dir / "results" / f"stim_experiments_test_{experiment}_{tag}"
+    test_results_root = parent_dir / "results" / f"stim_experiments_test_{experiment}_mon_{monitor}_{tag}"
     test_figures_root = parent_dir / "figures" / f"figs_test_{experiment}_{tag}"
     jobs = []
     
@@ -433,13 +428,13 @@ def test_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=Non
         pretrain_info_str = f"isi{pretrain_isi:.1f}_seed{pretrain_seed}" if pretrain_isi is not None else pretraining_label
         for test_isi in ISI_values:
             for test_seed in seedlist:
-                run_fname = f"test_{experiment}_isi{test_isi:.1f}_seed{test_seed}_simdur{np.float64(simdur)}.npz"
+                # match main_entrain naming: test_{experiment}_{pretraining_label}_seed{seed}_simdur{simdur}.npz
+                run_fname = f"test_{experiment}_{pretraining_label}_seed{test_seed}_simdur{np.float64(simdur)}.npz"
                 run_path = test_results_dir / run_fname
                 
                 command = (
                     f"python3 main_entrain.py --run-type test --experiment {experiment}"
                     f" --PFPC_plasticity-on False"
-                    f""
                     f" --seed {test_seed}"
                     f" --monitor-preset \"{monitor}\""
                     f" --simdur {np.float64(simdur)}"

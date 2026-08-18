@@ -8,13 +8,23 @@ repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 
+CLUSTER_PARENT_DIR = "/home/izet/Olivocerebellar-circuit"
+
+
+def normalize_parent_dir(value):
+    if value is None or value == "":
+        return Path(CLUSTER_PARENT_DIR)
+    value = str(value)
+    if value.startswith(("c:", "C:")) or "\\" in value:
+        return Path(CLUSTER_PARENT_DIR)
+    return Path(value)
+
 
 from stimulus_experiments.entrainment_experiments import (
     run_train,
     run_baseline,
     run_test,
     get_parent_dir,
-    resolve_parent_dir,
 )
 
 
@@ -29,8 +39,8 @@ def parse_args(arg_list= None):
     parser.add_argument("--OU-stim-isi-std",  type=float, default=0.0, help='Standard deviation of interval between PF-IO (ms)')
     parser.add_argument("--OU-stim-freq", type=float, default=700.0, help='')
     parser.add_argument("--OU-stim-start",  type=float, default=200.0, help='')
-    parser.add_argument("--OU-stim-amp-io-mean",  type=float, default=1.4, help='')
-    parser.add_argument("--OU-stim-amp-pf-mean",  type=float, default=1.4, help='')
+    parser.add_argument("--OU-stim-amp-io-mean",  type=float, default=0.7, help='')
+    parser.add_argument("--OU-stim-amp-pf-mean",  type=float, default=0.7, help='')
     parser.add_argument("--OU-stim-dur-io-mean",  type=float, default=50.0, help='')
     parser.add_argument("--OU-stim-dur-pf-mean",  type= float, default=50.0, help='')
 
@@ -104,7 +114,7 @@ def parse_args(arg_list= None):
     return parser.parse_args(arg_list)
 
 def build_train_config(args):
-    parent_dir = resolve_parent_dir(args.parent_dir)
+    parent_dir = normalize_parent_dir(args.parent_dir)
 
     tag = f"_{args.tag}" if args.tag else ""
 
@@ -166,7 +176,7 @@ def build_train_config(args):
 
 
 def build_test_config(args):
-    parent_dir = resolve_parent_dir(args.parent_dir)
+    parent_dir = normalize_parent_dir(args.parent_dir)
 
     tag = f"_{args.tag}" if args.tag else ""
 
@@ -224,7 +234,7 @@ def build_test_config(args):
 
 
 def build_baseline_config(args):
-    parent_dir = resolve_parent_dir(args.parent_dir)
+    parent_dir = normalize_parent_dir(args.parent_dir)
 
     tag = f"_{args.tag}" if args.tag else ""
 
