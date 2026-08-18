@@ -344,7 +344,7 @@ def train_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=No
 
 
 def test_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=None, ISI_std=None, experiment="fixed-isi", 
-                  pretraining_snapshot_paths=None, tag=None, plast):
+                  pretraining_snapshot_paths=None, tag=None):
     """
     Generate test commands with structured job information.
     
