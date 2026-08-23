@@ -20,11 +20,12 @@ class HalfWaveStimIOPF(bp.dyn.NeuDyn):
         phase_pf:
 
 
-
-        # IO proceeds PF  without overlap if ISI > 0 and |ISI| > dur_IO
-        # IO proceeds PF with overlap if ISI > 0 and |ISI| < dur_IO
-        # PF proceeds IO with overlap if ISI < 0 and  dur_IO < |ISI| < dur_PF + dur_IO
-        # PF proceeeds IO without overlap if ISI < 0 and |ISI| > dur_PF + dur_IO
+        # Order and timing of PF and IO stimuli depending on ISI
+        # Positive ISI: PF leads IO by ISI ms
+        # with overlap if ISI < dur_PF
+        # Negative ISI: IO leads PF by |ISI| ms
+        # with overlap if |ISI| < dur_IO
+        # Zero ISI: simultaneous onset
         """
         super().__init__(size = n_io+n_pf)
 
@@ -73,10 +74,11 @@ class HalfWaveStimIOPF(bp.dyn.NeuDyn):
         t = bp.share["t"]
 
         # Order and timing of PF and IO stimuli depending on ISI
-        pf_leads = self.current_isi.value < 0.0
+        pf_leads = self.current_isi.value > 0.0
 
-        self.stim_pf_start.value = bm.where(pf_leads,  self.t_stim_next.value, self.t_stim_next.value + bm.abs(self.current_isi.value))
-        self.stim_io_start.value = bm.where(pf_leads, self.t_stim_next.value + bm.abs(self.current_isi.value), self.t_stim_next.value)
+        self.stim_pf_start.value = bm.where(pf_leads, self.t_stim_next.value, self.t_stim_next.value + bm.abs(self.current_isi.value),)
+
+        self.stim_io_start.value = bm.where(pf_leads,self.t_stim_next.value + bm.abs(self.current_isi.value),self.t_stim_next.value,)
 
         stim_io_end = self.stim_io_start.value + self.dur_io
         stim_pf_end=  self.stim_pf_start.value + self.dur_pf
