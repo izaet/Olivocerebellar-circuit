@@ -50,18 +50,23 @@ def stimulus_testing_mon(net):
         "stim.isi": net.stim.current_isi,
         "stim_pf_start": net.stim.stim_pf_start,
         "stim_io_start": net.stim.stim_io_start,
+        "M_pf": net.stim.M_pf,
+        "M_io": net.stim.M_io,
 
         # Monitors for stimulus effect on neurons
         "pf.I_OU": net.pf.I_OU, 
+        "pf.rho": net.pf.rho,
+        "pf.I_total": net.pf.I_total,
 
         "pc.rho": net.pc.rho,
         "pc.spike": net.pc.spike,
         "pc.V": net.pc.V,
+        "pc.input": net.pc.input,
 
         "io.I_OU": net.io.neurons.I_OU,
         "io.V_soma": net.io.neurons.V_soma,
         "io.spike": net.io.neurons.spike,
-   
+        "io.I_total": net.io.neurons.I_total,
 
         # Monitors for plasticity 
         "pfpc_weights": net.pf_to_pc_BCM.weights_per_conn,

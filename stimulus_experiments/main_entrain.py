@@ -19,6 +19,21 @@ def normalize_parent_dir(value):
         return Path(CLUSTER_PARENT_DIR)
     return Path(value)
 
+def str2bool(value):
+    if isinstance(value, bool):
+        return value
+
+    value = value.strip().lower()
+
+    if value in ("true", "1", "yes", "y", "on"):
+        return True
+    if value in ("false", "0", "no", "n", "off"):
+        return False
+
+    raise argparse.ArgumentTypeError(
+        f"Expected a Boolean value, got {value!r}."
+    )
+
 
 from stimulus_experiments.entrainment_experiments import (
     run_train,
@@ -37,18 +52,18 @@ def parse_args(arg_list= None):
     # Stimulus
     parser.add_argument("--OU-stim-isi-mean",  type=float, default=120.0, help='Mean interval between PF-IO (ms)')
     parser.add_argument("--OU-stim-isi-std",  type=float, default=0.0, help='Standard deviation of interval between PF-IO (ms)')
-    parser.add_argument("--OU-stim-freq", type=float, default=700.0, help='')
-    parser.add_argument("--OU-stim-start",  type=float, default=200.0, help='')
+    parser.add_argument("--OU-stim-freq", type=float, default=400.0, help='')
+    parser.add_argument("--OU-stim-start",  type=float, default=0.0, help='')
     parser.add_argument("--OU-stim-amp-io-mean",  type=float, default=0.7, help='')
     parser.add_argument("--OU-stim-amp-pf-mean",  type=float, default=0.7, help='')
     parser.add_argument("--OU-stim-dur-io-mean",  type=float, default=50.0, help='')
     parser.add_argument("--OU-stim-dur-pf-mean",  type= float, default=50.0, help='')
 
-    parser.add_argument("--OU-stim-io-on", type=bool, default = True, help= 'Turn IO stimulus on/off')
-    parser.add_argument("--OU-stim-pf-on", type=bool, default = True, help= 'Turn IO stimulus on/off')
+    parser.add_argument("--OU-stim-io-on", type=str2bool, default = True, help= 'Turn IO stimulus on/off')
+    parser.add_argument("--OU-stim-pf-on", type=str2bool, default = True, help= 'Turn IO stimulus on/off')
 
     # Network
-    parser.add_argument("--PFPC_plasticity-on", type=bool, default = False, help= 'Turn on BCM rule for PF-PC synapse')
+    parser.add_argument("--PFPC_plasticity-on", type=str2bool, default = False, help= 'Turn on BCM rule for PF-PC synapse')
     parser.add_argument("--num-pf-bundles", type=int, default=5,
                     help="Number of PF bundles")
     parser.add_argument("--num-pc", type=int, default=100,

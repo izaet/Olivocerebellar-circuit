@@ -60,16 +60,13 @@ class HalfWaveStimIOPF(bp.dyn.NeuDyn):
         self.pf_mask = bm.Variable(bm.ones(self.n_pf, dtype = bool))
 
         # Output containing half waves
-        self.M_io = bm.Variable(bm.zeros(self.n_io))
+        self.M_io = bm.Variable(bm.zeros(self.n_io)) 
         self.M_pf = bm.Variable(bm.zeros(self.n_pf))
 
 
     def update(self):
 
-        # Turn stimulus off / on
-        io_stim_gate= self.stim_io_on.value.astype(bm.float32)
-        pf_stim_gate= self.stim_pf_on.value.astype(bm.float32)
-
+    
 
         t = bp.share["t"]
 
@@ -99,8 +96,8 @@ class HalfWaveStimIOPF(bp.dyn.NeuDyn):
         M_io_vec = bm.full_like(self.M_io, M_io_scalar)
         M_pf_vec =  bm.full_like(self.M_pf, M_pf_scalar)
 
-        self.M_io.value =  bm.where(self.io_mask, M_io_vec, 0.0) * io_stim_gate
-        self.M_pf.value = bm.where(self.pf_mask,M_pf_vec, 0.0 ) * pf_stim_gate
+        self.M_io.value =  bm.where(self.stim_io_on.value & self.io_mask,M_io_vec,0.0,)
+        self.M_pf.value = bm.where(self.stim_pf_on.value & self.pf_mask, M_pf_vec, 0.0)
 
         # Update timing values & ISI for next stimulus
         stim_finish = (t >= stim_end) & (self.in_stim.value)

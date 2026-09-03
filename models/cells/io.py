@@ -99,6 +99,7 @@ class IONeuron(bp.dyn.NeuDyn):
 
         self.I_OU = bm.Variable(bm.ones(size) * self.I_OU0)  # Start at baseline
         self.I_stim = bm.Variable(bm.zeros(size)) 
+        self.I_total = bm.Variable(bm.zeros(size))  # Total current including OU and stimulus
 
         # Spike monitoring
         self.io_threshold = kwargs["io_threshold"]
@@ -298,7 +299,8 @@ class IONeuron(bp.dyn.NeuDyn):
         # where dW = xi * sqrt(dt)
         noise_term = self.sigma_OU * bm.sqrt(2.0 / self.tau_OU) * xi * bm.sqrt(dt)
         drift_term = (self.I_OU0 - self.I_OU) / self.tau_OU * dt
-        current_I_OU = self.I_OU + drift_term + noise_term + self.I_stim.value   # Calculate next value, add external stimulus
+        current_I_OU = self.I_OU + drift_term + noise_term    
+        current_I_total = current_I_OU + self.I_stim.value # Add external stimulus
 
         # --- 2. Compute Gap Junction Currents ---
         I_gj = bm.zeros(self.num)
@@ -336,7 +338,7 @@ class IONeuron(bp.dyn.NeuDyn):
             soma_h,
             soma_n,
             soma_x,
-            current_I_OU,  # Pass the calculated next I_OU value
+            current_I_total,  # Pass the calculated next I_OU value
             I_syn_soma,  # Pass the current synaptic input
             dt=dt,
         )
@@ -383,6 +385,7 @@ class IONeuron(bp.dyn.NeuDyn):
 
         # --- 4. Assign Updated Values ---
         self.I_OU.value = current_I_OU  # Assign the updated OU value
+        self.I_total.value = current_I_total  # Assign the updated total current value
         self.V_soma.value = new_V_soma
         self.soma_k.value = new_soma_k
         self.soma_l.value = new_soma_l

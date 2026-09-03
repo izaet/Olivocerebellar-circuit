@@ -130,6 +130,8 @@ def init_and_run(duration=1000.0, dt=0.025, net_params=None, seed=42, jit=True):
 
     # --- Monitors Configuration --- #
 
+    monitor_function = monitor_presets[net_params["monitor_preset"]]
+    monitors = monitor_function(net)
 
     runner = bp.DSRunner(net, monitors=monitors, dt=dt, jit =jit, progress_bar=True)
     runner.progress_bar = False

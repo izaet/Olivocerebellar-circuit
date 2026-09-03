@@ -242,7 +242,6 @@ def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 
             f" --monitor-preset \"{monitor}\""
             f" --simdur {np.float64(simdur)}"
             f" --parent-dir {CLUSTER_PARENT_DIR}"
-            f" --timestep 0.5"
             f" --downsample {downsample}"
 
             + (f" --tag \"{tag}\"" if tag else "")

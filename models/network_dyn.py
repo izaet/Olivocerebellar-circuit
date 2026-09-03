@@ -42,6 +42,7 @@ class PFBundles(bp.dyn.NeuDyn):
 
         # Stimulus input
         self.I_stim = bm.Variable(bm.zeros(self.num))
+        self.I_total = bm.Variable(bm.zeros(self.num))
 
 
     def update(self):
@@ -49,9 +50,13 @@ class PFBundles(bp.dyn.NeuDyn):
         xi = bm.random.normal(0, 1, self.num)
         noise_term = self.sigma_OU * bm.sqrt(2.0 / self.tau_OU) * xi * bm.sqrt(dt)
         drift_term = (self.I_OU0 - self.I_OU) / self.tau_OU * dt
-        self.I_OU.value = self.I_OU + drift_term + noise_term + self.I_stim.value
-        self.rho.value = bm.abs(self.I_OU.value - self.I_OU0)
-        return self.I_OU
+
+        self.I_OU.value= self.I_OU.value + drift_term + noise_term 
+        self.I_total.value = self.I_OU.value + self.I_stim.value
+
+        self.rho.value = bm.abs((self.I_total.value) - self.I_OU0)
+        return self.I_total
+     
 
 class PFtoPC_BCM(bp.dyn.SynDyn):
     def __init__(self, pre, post, pre_idx, post_idx,  size=None,keep_size=False, sharding=None,name=None,mode=None,method='exp_auto', **kwargs):
@@ -153,7 +158,7 @@ class PFtoPC(bp.dyn.SynConn):
             )
 
     def update(self):
-        pre_I = self.pre.I_OU.value  # shape: (num_pf,)
+        pre_I = self.pre.I_total.value  # shape: (num_pf,)
         weights_per_conn = self.syndyn.weights_per_conn.value
 
         if self.syndyn.num_connections == 0:
@@ -519,7 +524,7 @@ class CerebellarNetwork(bp.DynSysGroup):
             IO_p1_std (float): Std dev of surface ratio soma/dendrite for IO. Default: 0.01.
             IO_p2_mean (float): Mean surface ratio axon/soma for IO. Default: 0.15.
             IO_p2_std (float): Std dev of surface ratio axon/soma for IO. Default: 0.01.
-            IO_I_OU0 (float): Baseline somatic current for IO OU process (nA). Default: -0.0.
+            IO_I_OU0 (float): Baseline somatic current for IO OU process (nA). Default: -0.3.
             IO_tau_OU (float): Time constant for IO OU process (ms). Default: 50.0.
             IO_sigma_OU (float): Noise intensity for IO OU process. Default: 0.3.
             IO_V_soma_init_mean (float): Mean initial soma membrane potential for IO (mV). Default: -60.0.
@@ -557,7 +562,7 @@ class CerebellarNetwork(bp.DynSysGroup):
             IOPC_cs_weight (float): Weight of complex spike input from IO to PC. Default: 0.22.
             IOPC_io_threshold (float): Voltage threshold for IO spike detection (for IO->PC synapse) (mV). Default: -30.0.
         """
-        super(CerebellarNetwork, self).__init__()
+        super().__init__()
 
         # --- Central Parameter Definition --- #
 
@@ -760,7 +765,7 @@ class CerebellarNetwork(bp.DynSysGroup):
             "p2": bm.random.normal(
                 kwargs.get("IO_p2_mean", 0.15), kwargs.get("IO_p2_std", 0.01), num_io
             ),  # Cell surface ratio axon(hillock)/soma - no unit given
-            "I_OU0": bm.asarray(kwargs.get("IO_I_OU0", -0.03)),  # mA/cm2
+            "I_OU0": bm.asarray(kwargs.get("IO_I_OU0", -0.3)),  # mA/cm2
             "tau_OU": bm.asarray(kwargs.get("IO_tau_OU", 50.0)),  # ms
             "sigma_OU": bm.asarray(kwargs.get("IO_sigma_OU", 0.3)),  # mV
 
@@ -894,16 +899,16 @@ class CerebellarNetwork(bp.DynSysGroup):
         self.post_pc_idx = iopc_post
 
         # --- Create Synapses --- #
+        self.io_to_pc = IOToPC(                 # IOtoPC first, to use post.cpsk value in PFtoPC
+                    pre=self.io.neurons, post=self.pc, conn=iopc_conn, **iopc_params
+                )
         self.pf_to_pc_BCM = PFtoPC_BCM(size= pfpc_params["n_connections"], pre=self.pf, post=self.pc, pre_idx=pfpc_pre , post_idx=pfpc_post, **pfpc_params)
         self.pf_to_pc = PFtoPC(pre=self.pf, post=self.pc, conn=pfpc_conn, syndyn=self.pf_to_pc_BCM, **pfpc_params)
         self.pc_to_cn = PCToCN(pre=self.pc, post=self.cn, conn=pccn_conn, **pccn_params)
         self.cn_to_io = CNToIO(
             pre=self.cn, post=self.io.neurons, conn=cnio_conn, **cnio_params
         )
-        self.io_to_pc = IOToPC(
-            pre=self.io.neurons, post=self.pc, conn=iopc_conn, **iopc_params
-        )
-
+        
          # ------ Add stimulus input to PF and IO ------ #
         self.stim = HalfWaveStimIOPF(self.num_io, self.num_pf_bundles, **stim_params)
 
