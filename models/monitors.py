@@ -18,7 +18,14 @@ def stimulus_mon(net):
     return {"stim.isi": net.stim.current_isi,
         "stim.M_io": net.stim.M_io,
         "stim.M_pf": net.stim.M_pf,
-    }       
+    }      
+
+def voltage_mon(net):
+    return {   "pc.V": net.pc.V,
+            "cn.V": net.cn.V,
+            "io.V_soma": net.io.neurons.V_soma,
+                    "io.V_axon": net.io.neurons.V_axon,
+                    "io.V_dend": net.io.neurons.V_dend} 
    
 def neuron_pot_mon(net):
     return {
@@ -84,6 +91,7 @@ monitor_presets = {
     "stimulus": stimulus_mon,
     "neuron_spike": neuron_spike_mon,
     "stimulus_testing": stimulus_testing_mon,
+    "voltages": voltage_mon
 }   
 
 
