@@ -21,11 +21,11 @@ def stimulus_mon(net):
     }      
 
 def voltage_mon(net):
-    return {   "pc.V": net.pc.V,
-            "cn.V": net.cn.V,
-            "io.V_soma": net.io.neurons.V_soma,
-                    "io.V_axon": net.io.neurons.V_axon,
-                    "io.V_dend": net.io.neurons.V_dend} 
+    return {  "pc.V": net.pc.V,
+        "cn.V": net.cn.V,
+        "io.V_soma": net.io.neurons.V_soma,
+        "io.V_axon": net.io.neurons.V_axon,
+        "io.V_dend": net.io.neurons.V_dend} 
    
 def neuron_pot_mon(net):
     return {
