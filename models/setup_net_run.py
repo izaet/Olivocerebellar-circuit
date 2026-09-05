@@ -38,7 +38,7 @@ def init_net_and_runner(net_params=None, dt=0.025 , seed=88, jit=True):
     monitor_function = monitor_presets[net_params["monitor_preset"]]
     monitors = monitor_function(net)
     
-    runner = bp.DSRunner(net, monitors=monitors, dt=dt, jit=jit, progress_bar=False)
+    runner = bp.DSRunner(net, monitors=monitors, dt=dt, jit=jit, progress_bar=False, memory_efficient=True)
     if jit:
         runner._fun_predict = bm.jit(runner._fun_predict)
     return net, runner
@@ -133,7 +133,7 @@ def init_and_run(duration=1000.0, dt=0.025, net_params=None, seed=42, jit=True):
     monitor_function = monitor_presets[net_params["monitor_preset"]]
     monitors = monitor_function(net)
 
-    runner = bp.DSRunner(net, monitors=monitors, dt=dt, jit =jit, progress_bar=True)
+    runner = bp.DSRunner(net, monitors=monitors, dt=dt, jit =jit, progress_bar=True, memory_efficient=True)
     runner.progress_bar = False
     if jit:
         runner._fun_predict = bm.jit(runner._fun_predict)

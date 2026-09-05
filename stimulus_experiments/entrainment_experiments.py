@@ -221,7 +221,7 @@ def run_test(config):
 # def run_splitter():
 #     return []
 
-def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 480_000, experiment = "nostim", downsample = 80,tag = None, plasticity_on = True, stim_io_on = False, stim_pf_on = False, stim_isi_mean = 120.0, stim_isi_std = 0.0):
+def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 480_000, dt= 0.1, experiment = "nostim", downsample = 80,tag = None, plasticity_on = True, stim_io_on = False, stim_pf_on = False, stim_isi_mean = 120.0, stim_isi_std = 0.0):
     seedlist = np.arange(88, 88+ n_seeds)
 
     parent_dir = Path(parent_dir) if parent_dir is not None else Path(get_parent_dir())
@@ -243,6 +243,7 @@ def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 
             f" --simdur {np.float64(simdur)}"
             f" --parent-dir {CLUSTER_PARENT_DIR}"
             f" --downsample {downsample}"
+            f" --dt {dt}"
 
             + (f" --tag \"{tag}\"" if tag else "")
         )
