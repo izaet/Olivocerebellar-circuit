@@ -115,7 +115,7 @@ class PFtoPC_BCM(bp.dyn.SynDyn):
         rho_PF_per_con = bm.take(rho_PF, self.pre_idx)
         cspk_per_con = bm.take(self.post.cspk.value, self.post_idx)  # Boolean for connections where PC has cspk
 
-        # BCM / LTP rule
+        # BCM / LTP and LTD rule
         self.dw_BCM.value = dt * (self.pf_scaling *rho_PF_per_con * bm.tanh(10.0* ( ( rho_PC_per_con*( rho_PC_per_con-theta_M_per_con)) /theta_M_per_con))) # (Eq. 18)
         self.w_BCM.value += self.dw_BCM.value
 

@@ -225,7 +225,7 @@ def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 
     seedlist = np.arange(88, 88+ n_seeds)
 
     parent_dir = Path(parent_dir) if parent_dir is not None else Path(get_parent_dir())
-    tag = f"_{tag}" if tag else ""
+    tag = f"{tag}" if tag else ""
     results_dir = parent_dir / "results" / f"stim_experiments_baseline_{experiment}_mon_{monitor}_{tag}"
     figures_dir = parent_dir / "figures" / f"figs_baseline_{experiment}_{tag}"
     jobs = []
@@ -237,15 +237,20 @@ def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 
         
 
         command = (
-            f"python3 main_entrain.py --run-type baseline --experiment {experiment} --PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False"
+            f"python3 main_entrain.py --run-type baseline"
+            f" --experiment {experiment}"
+            f" --PFPC_plasticity-on {plasticity_on}"
+            f" --OU-stim-io-on {stim_io_on}"
+            f" --OU-stim-pf-on {stim_pf_on}"
             f" --seed {seed}"
-            f" --monitor-preset \"{monitor}\""
+            f" --monitor-preset {monitor}"
             f" --simdur {np.float64(simdur)}"
             f" --parent-dir {CLUSTER_PARENT_DIR}"
             f" --downsample {downsample}"
             f" --dt {dt}"
 
-            + (f" --tag \"{tag}\"" if tag else "")
+
+            + (f" --tag {tag}" if tag else "")
         )
 
         jobs.append({
@@ -311,7 +316,7 @@ def train_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=No
                 f"python3 main_entrain.py --run-type train --experiment {experiment}"
                 f" --PFPC_plasticity-on True"
                 f" --seed {seed}"
-                f" --monitor-preset \"{monitor}\""
+                f" --monitor-preset {monitor}"
                 f" --simdur {np.float64(simdur)}"
                 f" --parent-dir {CLUSTER_PARENT_DIR}"
                 f" --OU-stim-isi-mean {ISI}"
@@ -436,10 +441,10 @@ def test_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=Non
                     f"python3 main_entrain.py --run-type test --experiment {experiment}"
                     f" --PFPC_plasticity-on False"
                     f" --seed {test_seed}"
-                    f" --monitor-preset \"{monitor}\""
+                    f" --monitor-preset {monitor}"
                     f" --simdur {np.float64(simdur)}"
                     f" --parent-dir {CLUSTER_PARENT_DIR}"
-                    f" --pretraining-path \"{pretrain_snapshot_path}\""
+                    f" --pretraining-path {pretrain_snapshot_path}"
                     + (f" --tag \"{tag}\"" if tag else "")
                 )
                 
