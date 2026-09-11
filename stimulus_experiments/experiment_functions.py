@@ -218,21 +218,34 @@ def run_test(config):
 
 ################# -------------- Experiments / command generators  -------------- ##################
 
-# def run_splitter():
-#     return []
-
-def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 480_000, dt= 0.1, experiment = "nostim", downsample = 80,tag = None, plasticity_on = True, stim_io_on = False, stim_pf_on = False, stim_isi_mean = 120.0, stim_isi_std = 0.0):
+def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 50_000, dt= 0.1, experiment = "nostim", downsample = 80, tag = None,
+                       plasticity_on = True, stim_io_on = False, stim_pf_on = False, stim_isi_mean = 120.0, stim_isi_std = 40.0, zebrin = 'positive'):
     seedlist = np.arange(88, 88+ n_seeds)
 
     parent_dir = Path(parent_dir) if parent_dir is not None else Path(get_parent_dir())
     tag = f"{tag}" if tag else ""
     results_dir = parent_dir / "results" / f"stim_experiments_baseline_{experiment}_mon_{monitor}_{tag}"
-    figures_dir = parent_dir / "figures" / f"figs_baseline_{experiment}_{tag}"
     jobs = []
 
+    if experiment == "variable-isi":
+        stim_io_on = True
+        stim_pf_on = True
+        isi_std = stim_isi_std
+        isi_mean = stim_isi_mean
+
+    elif experiment == "fixed-isi":
+        stim_io_on = True
+        stim_pf_on = True
+        isi_std = 0.0
+        isi_mean = stim_isi_mean
+
+    elif experiment == "nostim":
+        plasticity_on = True
+        stim_io_on = False
+        stim_pf_on = False
 
     for seed in seedlist:
-        run_fname = f"baseline_{experiment}_seed{seed}_simdur{np.float64(simdur)}.npz"
+        run_fname =  f"baseline_{experiment}_plasticity_{plasticity_on}_seed{seed}_zebrin_{zebrin}simdur{simdur}.npz"
         run_path = results_dir / run_fname
         
 
@@ -240,233 +253,213 @@ def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 
             f"python3 main_entrain.py --run-type baseline"
             f" --experiment {experiment}"
             f" --PFPC_plasticity-on {plasticity_on}"
-            f" --OU-stim-io-on {stim_io_on}"
-            f" --OU-stim-pf-on {stim_pf_on}"
             f" --seed {seed}"
             f" --monitor-preset {monitor}"
             f" --simdur {np.float64(simdur)}"
             f" --parent-dir {CLUSTER_PARENT_DIR}"
+            f" --OU-stim-io-on {stim_io_on}"
+            f" --OU-stim-pf-on {stim_pf_on}"
+            f" --OU-stim-isi-std {isi_std}"
+            f" --OU-stim-isi-mean {isi_mean}"
+            f" --zebrin-condition {zebrin}"
             f" --downsample {downsample}"
             f" --dt {dt}"
-
-
             + (f" --tag {tag}" if tag else "")
         )
 
         jobs.append({
             "command": command,
             "run_path": str(run_path),
-            "figures_dir": str(figures_dir),
             "seed": seed,
         })
 
     return jobs
 
 
-def train_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=None, experiment="fixed-isi", ISI_std=0.0, tag=None):
-    """
-    Generate training commands with structured job information.
-    
-    Parameters:
-    -----------
-    parent_dir : str or Path
-        Base directory for results/states/figures
-    n_seeds : int
-        Number of different seeds to use (starting from 88)
-    simdur : float
-        Maximum simulation duration (ms)
-    ISI_values : array-like or None
-        If None, uses single default ISI of 120.0 ms
-        If array-like, generates a job for each ISI value
-    experiment : str
-        Experiment type: "fixed-isi", "variable-isi", or "nostim"
-    tag : str or None
-        Optional tag appended to folder names
- 
-    
-    Returns:
-    --------
-    list of dict
-        Each dict contains: command, run_path, fin_state_path, fin_state_dir, figures_dir, seed, ISI
-    """
+def train_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 50_000, dt= 0.1, ISI_values=[120], experiment = "fixed-isi", downsample = 80,
+                    tag = None, stim_isi_std = 40.0, zebrin = 'positive'):
+
     seedlist = np.arange(88, 88 + n_seeds)
-    if ISI_values is None:
-        ISI_values = [120.0]
-    else:
-        ISI_values = np.atleast_1d(ISI_values)
-    
+    ISI_values = np.atleast_1d(ISI_values)
+    tag = f"{tag}" if tag else ""
     parent_dir = Path(parent_dir) if parent_dir is not None else Path(get_parent_dir())
    
-    tag = f"_{tag}" if tag else ""
     results_dir = parent_dir / "results" / f"stim_experiments_train_{experiment}_mon_{monitor}_{tag}"
-    figures_dir = parent_dir / "figures" / f"figs_train_{experiment}_{tag}"
     fin_state_dir = parent_dir / "states" / f"states_{experiment}_{tag}"
     jobs = []
     
-    for ISI in ISI_values:
+    for stim_isi_mean in ISI_values:
         for seed in seedlist:
-           
-            fin_state_fname = (f"{experiment}"f"_isi{ISI:.1f}_isi_std{ISI_std:.1f}_seed{seed}_simdur{simdur}_state.bp")
+
+            # Set stimulus params   
+            if experiment == "variable-isi":
+                stim_io_on = True
+                stim_pf_on = True
+                isi_std = stim_isi_std
+                isi_mean = stim_isi_mean
+
+            elif experiment == "fixed-isi":
+                stim_io_on = True
+                stim_pf_on = True
+                isi_std = 0.0
+                isi_mean = stim_isi_mean
+
+            elif experiment == "nostim":
+                plasticity_on = True
+                stim_io_on = False
+                stim_pf_on = False
+
+            # Set names for path in jobs
+            fin_state_fname = (f"train_{experiment}_isi{stim_isi_mean:.1f}_isi_std{stim_isi_std:.1f}_seed{seed}__zebrin_{zebrin}_simdur{simdur}_state.bp")
             fin_state_path = fin_state_dir / fin_state_fname
-            # match main_entrain naming: run_type_experiment_isi{:.1f}_isi_std{:.1f}seed{seed}_simdur{simdur}.npz
-            run_fname = f"train_{experiment}_isi{ISI:.1f}_isi_std{ISI_std:.1f}seed{seed}_simdur{np.float64(simdur)}.npz"
+
+            run_fname = (f"train_{experiment}_isi{stim_isi_mean:.1f}_isi_std{stim_isi_std:.1f}seed{seed}_zebrin_{zebrin}_simdur{simdur}.npz")
             run_path = results_dir / run_fname
             
             command = (
-                f"python3 main_entrain.py --run-type train --experiment {experiment}"
+                f"python3 main_entrain.py --run-type train"
+                f" --experiment {experiment}"
                 f" --PFPC_plasticity-on True"
                 f" --seed {seed}"
                 f" --monitor-preset {monitor}"
                 f" --simdur {np.float64(simdur)}"
                 f" --parent-dir {CLUSTER_PARENT_DIR}"
-                f" --OU-stim-isi-mean {ISI}"
-                f" --OU-stim-isi-std {ISI_std}"
-                + (f" --tag \"{tag}\"" if tag else "")
-            )
-            
-            if experiment == "variable-isi":
-                command = command.replace("--PFPC_plasticity-on True", 
-                                        f"--PFPC_plasticity-on True --OU-stim-io-on True --OU-stim-pf-on True --OU-stim-isi-std {ISI_std} --OU-stim-isi-mean {ISI}")
-            
-            elif experiment == "fixed-isi":
-                command = command.replace("--PFPC_plasticity-on True", 
-                                        f"--PFPC_plasticity-on True --OU-stim-io-on True --OU-stim-pf-on True --OU-stim-isi-mean {ISI}")
-            elif experiment == "nostim":
-                command = command.replace("--PFPC_plasticity-on True", 
-                                        f"--PFPC_plasticity-on True --OU-stim-io-on False --OU-stim-pf-on False")
-            
+                f" --OU-stim-io-on {stim_io_on}"
+                f" --OU-stim-pf-on {stim_pf_on}"
+                f" --OU-stim-isi-std {isi_std}"
+                f" --OU-stim-isi-mean {isi_mean}"
+                f" --zebrin-condition {zebrin}"
+                f" --downsample {downsample}"
+                f" --dt {dt}"
+                + (f" --tag {tag}" if tag else "")
+                    )
+
+        
             jobs.append({
                 "command": command,
                 "run_path": str(run_path),
                 "fin_state_path": str(fin_state_path),
-                "fin_state_dir": str(fin_state_dir),
-                "figures_dir": str(figures_dir),
                 "seed": seed,
-                "ISI": ISI,
+                "stim_isi_mean": stim_isi_mean,
             })
     
     return jobs
 
 
-def test_commands(parent_dir, monitor, n_seeds=4, simdur=480_000, ISI_values=None, ISI_std=None, experiment="fixed-isi", 
-                  pretraining_snapshot_paths=None, tag=None):
-    """
-    Generate test commands with structured job information.
-    
-    Parameters:
-    -----------
-    parent_dir : str or Path
-        Base directory for results/states/figures
-    n_seeds : int
-        Number of different seeds to use (starting from 88) for test runs
-    simdur : float
-        Simulation duration (ms)
-    ISI_values : array-like or None
-        ISI values to test. If None, uses 120.0 ms
-    ISI_std : float or None
-        Standard deviation for variable-isi experiment
-    experiment : str
-        Experiment type: "fixed-isi", "variable-isi", or "nostim"
-    pretraining_snapshot_paths : list of str or None
-        List of full paths to pretraining snapshot files (.bp files)
-        If None, raises ValueError
-    tag : str or None
-        Optional tag appended to folder names
+def test_commands(parent_dir, monitor= "plasticity_min", state_paths=None, n_seeds=4, simdur= 50_000, dt= 0.1, ISI_values=[120], experiment = "fixed-isi", downsample = 80,
+                    tag = None, plasticity_on = True, stim_isi_std = 40.0, zebrin = 'positive'):
+  
 
+    # Test runs require state paths
+    if state_paths is None or len(state_paths) == 0:
+        raise ValueError("test_commands requires a non-empty list of state_paths")
     
-    Returns:
-    --------
-    list of dict
-        Each dict contains: command, run_path, snapshot_path, snapshot_dir, figures_dir, 
-                          seed, ISI, pretraining_snapshot_path, pretraining_info
-    """
-    if pretraining_snapshot_paths is None or len(pretraining_snapshot_paths) == 0:
-        raise ValueError("test_commands requires a non-empty list of pretraining_snapshot_paths")
-    
-    pretraining_snapshot_paths = [Path(p) for p in pretraining_snapshot_paths]
-    
-    seedlist = np.arange(88, 88 + n_seeds)
-    if ISI_values is None:
-        ISI_values = [120.0]
-    else:
-        ISI_values = np.atleast_1d(ISI_values)
-    
+    tag = f"{tag}" if tag else ""
     parent_dir = Path(parent_dir) if parent_dir is not None else Path(get_parent_dir())
-    tag = f"_{tag}" if tag else ""
-    test_results_root = parent_dir / "results" / f"stim_experiments_test_{experiment}_mon_{monitor}_{tag}"
-    test_figures_root = parent_dir / "figures" / f"figs_test_{experiment}_{tag}"
+    state_paths = [Path(p) for p in state_paths]
+    ISI_values = np.atleast_1d(ISI_values)
     jobs = []
+    seedlist = np.arange(88, 88 + n_seeds)
+
+    test_results_root = parent_dir / "results" / f"stim_experiments_test_{experiment}_mon_{monitor}_{tag}"
+
     
-    for pretrain_snapshot_path in pretraining_snapshot_paths:
-        pretraining_label = pretrain_snapshot_path.stem.replace("_state", "")
+    for snapshot_path in state_paths:
+        pretraining_label = snapshot_path.stem.removesuffix("_state")
         test_results_dir = test_results_root / pretraining_label
-        test_figures_dir = test_figures_root / pretraining_label
 
-        snapshot_parts = pretraining_label.split("_")
-        pretrain_isi = None
-        pretrain_seed = None
-        pretrain_simdur = None
+        pretraining_info = parse_pretraining_label(pretraining_label)
         
-        for i, part in enumerate(snapshot_parts):
-            if part == "isi" and i + 1 < len(snapshot_parts):
-                try:
-                    pretrain_isi = float(snapshot_parts[i + 1])
-                except (ValueError, IndexError):
-                    pass
-            elif part == "seed" and i + 1 < len(snapshot_parts):
-                try:
-                    pretrain_seed = int(snapshot_parts[i + 1])
-                except (ValueError, IndexError):
-                    pass
-            elif part == "simdur" and i + 1 < len(snapshot_parts):
-                try:
-                    pretrain_simdur = float(snapshot_parts[i + 1])
-                except (ValueError, IndexError):
-                    pass
-
-        pretraining_info = {
-            "pretrain_isi": pretrain_isi,
-            "pretrain_seed": pretrain_seed,
-            "pretrain_simdur": pretrain_simdur
-            }
         
-        pretrain_info_str = f"isi{pretrain_isi:.1f}_seed{pretrain_seed}" if pretrain_isi is not None else pretraining_label
-        for test_isi in ISI_values:
-            for test_seed in seedlist:
+        for stim_isi_mean in ISI_values:
+            for seed in seedlist:
                 # match main_entrain naming: test_{experiment}_{pretraining_label}_seed{seed}_simdur{simdur}.npz
-                run_fname = f"test_{experiment}_{pretraining_label}_seed{test_seed}_simdur{np.float64(simdur)}.npz"
+                run_fname = f"test_{experiment}_{pretraining_label}_seed{seed}_simdur{np.float64(simdur)}.npz"
                 run_path = test_results_dir / run_fname
-                
+
+
+                # Set stimulus params   
+                if experiment == "variable-isi":
+                    stim_io_on = True
+                    stim_pf_on = True
+                    isi_std = stim_isi_std
+                    isi_mean = stim_isi_mean
+    
+                elif experiment == "fixed-isi":
+                    stim_io_on = True
+                    stim_pf_on = True
+                    isi_std = 0.0
+                    isi_mean = stim_isi_mean
+    
+                elif experiment == "nostim":
+                    plasticity_on = True
+                    stim_io_on = False
+                    stim_pf_on = False
+
                 command = (
-                    f"python3 main_entrain.py --run-type test --experiment {experiment}"
-                    f" --PFPC_plasticity-on False"
-                    f" --seed {test_seed}"
+                    f"python3 main_entrain.py --run-type test"
+                    f" --experiment {experiment}"
+                    f" --PFPC_plasticity-on {plasticity_on}"
+                    f" --seed {seed}"
                     f" --monitor-preset {monitor}"
                     f" --simdur {np.float64(simdur)}"
                     f" --parent-dir {CLUSTER_PARENT_DIR}"
-                    f" --pretraining-path {pretrain_snapshot_path}"
-                    + (f" --tag \"{tag}\"" if tag else "")
-                )
-                
-                if experiment == "variable-isi":
-                    command += f" --OU-stim-io-on True --OU-stim-pf-on True --OU-stim-isi-std {ISI_std} --OU-stim-isi-mean {test_isi}"
-                elif experiment == "fixed-isi":
-                    command += f" --OU-stim-io-on True --OU-stim-pf-on True --OU-stim-isi-mean {test_isi}"
-                elif experiment == "nostim":
-                    command += " --OU-stim-io-on False --OU-stim-pf-on False"
-                
+                    f" --OU-stim-io-on {stim_io_on}"
+                    f" --OU-stim-pf-on {stim_pf_on}"
+                    f" --OU-stim-isi-std {isi_std}"
+                    f" --OU-stim-isi-mean {isi_mean}"
+                    f" --zebrin-condition {zebrin}"
+                    f" --downsample {downsample}"
+                    f" --dt {dt}"
+                    + (f" --tag {tag}" if tag else "")
+                        )
+      
                 jobs.append({
                     "command": command,
                     "run_path": str(run_path),
-                    "figures_dir": str(test_figures_dir),
-                    "seed": test_seed,
-                    "ISI": test_isi,
-                    "pretraining_snapshot_path": str(pretrain_snapshot_path),
+                    "seed": seed,
+                    "stim_isi_mean": stim_isi_mean,
+                    "pretraining_snapshot_path": str(snapshot_path),
                     "pretraining_info": pretraining_info,
                     "pretraining_label": pretraining_label,
                 })
     
     return jobs
+
+################### ----------------------- Helpers ------------------------------------
+
+def parse_pretraining_label(pretraining_label):
+    """Extract ISI, seed, and simulation duration from a snapshot label."""
+
+    info = {
+        "pretrain_isi": None,
+        "pretrain_seed": None,
+        "pretrain_simdur": None,
+    }
+
+    parts = pretraining_label.split("_")
+
+    value_parsers = {
+        "isi": ("pretrain_isi", float),
+        "seed": ("pretrain_seed", int),
+        "simdur": ("pretrain_simdur", float),
+    }
+
+    for index, part in enumerate(parts[:-1]):
+        if part not in value_parsers:
+            continue
+
+        key, parser = value_parsers[part]
+
+        try:
+            info[key] = parser(parts[index + 1])
+        except ValueError:
+            pass
+
+    return info
+
+
+
 
 ########## ------------ Merging data for analysis ------------- ############
 
