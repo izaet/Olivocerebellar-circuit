@@ -765,9 +765,9 @@ class CerebellarNetwork(bp.DynSysGroup):
             "p2": bm.random.normal(
                 kwargs.get("IO_p2_mean", 0.15), kwargs.get("IO_p2_std", 0.01), num_io
             ),  # Cell surface ratio axon(hillock)/soma - no unit given
-            "I_OU0": bm.asarray(kwargs.get("IO_I_OU0", -0.3)),  # mA/cm2
+            "I_OU0": bm.asarray(kwargs.get("IO_I_OU0", -0.3)),  # uA/cm2
             "tau_OU": bm.asarray(kwargs.get("IO_tau_OU", 50.0)),  # ms
-            "sigma_OU": bm.asarray(kwargs.get("IO_sigma_OU", 0.3)),  # mV
+            "sigma_OU": bm.asarray(kwargs.get("IO_sigma_OU", 0.7)),  # uA/cm2
 
             "io_threshold": kwargs.get("IO_threshold", -30.0), # mV
 
