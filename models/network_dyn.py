@@ -49,7 +49,7 @@ class PFBundles(bp.dyn.NeuDyn):
         dt = bp.share["dt"]
         xi = bm.random.normal(0, 1, self.num)
         noise_term = self.sigma_OU * bm.sqrt(2.0 / self.tau_OU) * xi * bm.sqrt(dt)
-        drift_term = (self.I_OU0 - self.I_OU) / self.tau_OU * dt
+        drift_term = ((self.I_OU0 - self.I_OU) / self.tau_OU) * dt
 
         self.I_OU.value= self.I_OU.value + drift_term + noise_term 
         self.I_total.value = self.I_OU.value + self.I_stim.value
@@ -79,7 +79,7 @@ class PFtoPC_BCM(bp.dyn.SynDyn):
         self.weights_per_conn = bm.Variable( bm.asarray(kwargs["init_weights"]))
         self.w_cspk = bm.Variable(bm.zeros(self.num_connections)) # Initial value of PF_PC weight is completely determined by BCM/LTP weights
         self.w_BCM = bm.Variable(bm.zeros(self.num_connections))# bm.Variable(bm.asarray(kwargs["init_weights"]))
-        self.theta_M = bm.Variable(bm.ones(self.post.size) * (kwargs["theta_M_init"])) # Plasticity threshold stored
+        self.theta_M = bm.Variable(bm.ones(self.post.size) * (kwargs["theta_M_init"])) # Plasticity threshold stored per PC cell
         self.init_weight = kwargs["init_weights"]
 
 
@@ -124,7 +124,7 @@ class PFtoPC_BCM(bp.dyn.SynDyn):
         dw_cspk_increase = bm.where(cspk_per_con, dw_cspk_increase_all, 0.0) # LTD increase for synapses with cspk (Eq. 20)
         dw_continuous = -self.w_cspk.value / self.tau_cspk * dt # Continuous decay of LTD for all synapses (Eq. 19)
 
-        self.dw_cspk.value = dw_continuous + dw_cspk_increase
+        self.dw_cspk.value = dw_continuous + dw_cspk_increase # Only for monitoring the total change in weight, not used in computaiton
         self.w_cspk.value = self.w_cspk.value * bm.exp(-dt / self.tau_cspk) + dw_cspk_increase
 
         # Final sum of weights
@@ -848,7 +848,7 @@ class CerebellarNetwork(bp.DynSysGroup):
             "theta_M_init": kwargs.get("PFPC_theta_M_init", 0.060 ), # kHz 0.060
             "A_cspk": kwargs.get("PFPC_A_cspk", -0.1),
             "tau_M": kwargs.get("PFPC_tau_M", 15.0), # ms 15.0
-            "tau_cspk": kwargs.get("PFPC_tau_cspk", 350.0),
+            "tau_cspk": kwargs.get("PF 15.PC_tau_cspk", 350.0), # ms
             "I_PF_0" : kwargs.get("PFPC_IO_I_PF_0", 0.0013), # kHz
             "pf_scaling": kwargs.get("PFPC_pf_scaling", 0.0050),
             "plasticity_on": kwargs.get("PFPC_plasticity_on", True),

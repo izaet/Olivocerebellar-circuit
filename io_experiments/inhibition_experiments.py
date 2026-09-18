@@ -16,9 +16,10 @@ import glob
 import pickle
 from scipy.signal.windows import dpss
 
-sys.path.append('C:/Users/HP/PycharmProjects/Internproject 2025/cerebellum-jax-main')
+sys.path.append('C:/Users/HP/ModellingProjects/Olivocerebellar-circuit')
+# from models.minimal_network import IOinhibitionNetwork
 
-import models.minimal_network as minimal_net
+
 
 
 ## ------------- General running functions ---------------####
