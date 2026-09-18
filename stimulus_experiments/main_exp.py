@@ -4,6 +4,10 @@ import os
 import time
 from pathlib import Path
 
+repo_root = Path(__file__).resolve().parents[1]
+if str(repo_root) not in sys.path:
+    sys.path.insert(0, str(repo_root))
+
 from stimulus_experiments.experiment_functions import (
     run_train,
     run_baseline,
@@ -45,9 +49,7 @@ def build_net_params(args):
 
 # ------------------------------------------ Helpers ------------------------------------------------------
 
-repo_root = Path(__file__).resolve().parents[1]
-if str(repo_root) not in sys.path:
-    sys.path.insert(0, str(repo_root))
+
 
 CLUSTER_PARENT_DIR = "/home/izet/Olivocerebellar-circuit"
 
