@@ -252,7 +252,7 @@ def build_test_config(args):
         "net_params": net_params,
         "run_params": run_params,
         "run_path": run_path,
-        "pretraining_state_path": pretraining_state_path
+        "pretraining661446_state_path": pretraining_state_path
     }
     return config
 

@@ -27,52 +27,6 @@ CLUSTER_PARENT_DIR = "/home/izet/Olivocerebellar-circuit"
 
 
 ### ------------- General running functions ---------------####
-def get_parent_dir():
-    try:
-        return Path(__file__).resolve().parent.parent
-    except NameError:
-        return Path.cwd().parent
-    
-
-def get_connections(net):
-
-    connections_idx = {
-        "pf_pc_pre": net.pf_to_pc_BCM.pre_idx,
-        "pf_pc_post": net.pf_to_pc_BCM.post_idx,
-        "io_pc_pre": net.io_to_pc.io_source_indices,
-        "io_pc_post": net.io_to_pc.pc_target_indptr,
-    }
-
-    return connections_idx 
-
-def get_io_topography (net):
-
-    io_topography = {
-        "n_bridges": net.io.n_bridges,
-        "io_src": np.array(net.io.neurons.gj_src),
-        "io_tgt": np.array(net.io.neurons.gj_tgt),
-        "io_cluster_ids": net.io.cluster_ids,
-        "n_neurons": net.num_io}
-
-    return io_topography
-
-
-def force_net_params(net, net_params):
-    
-    net.pf_to_pc_BCM.plasticity_on.value = bm.asarray(net_params['PFPC_plasticity_on'])
-
-    net.stim.stim_io_on.value = bm.asarray(net_params['OU_stim_io_on'])
-    net.stim.stim_pf_on.value = bm.asarray(net_params['OU_stim_pf_on'])
-    net.stim.isi_mean.value = bm.asarray(net_params['OU_stim_isi_mean'])
-    net.stim.isi_std.value = bm.asarray(net_params['OU_stim_isi_std'])
-    net.stim.stim_freq = net_params['OU_stim_freq']
-
-    net.stim.dur_io = net_params['OU_stim_dur_io_mean']
-    net.stim.dur_pf= net_params['OU_stim_dur_pf_mean']
-    net.stim.amp_io = net_params['OU_stim_amp_io_mean']
-    net.stim.amp_pf = net_params['OU_stim_amp_pf_mean']
-
-    return net
 
 
 def run_train(config):
@@ -219,7 +173,7 @@ def run_test(config):
 ################# -------------- Experiments / command generators  -------------- ##################
 
 def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 50_000, dt= 0.1, experiment = "nostim", downsample = 80, tag = None,
-                       plasticity_on = True, stim_io_on = False, stim_pf_on = False, stim_isi_mean = 120.0, stim_isi_std = 40.0, zebrin = 'positive'):
+                       plasticity_on = True, stim_io_on = False, stim_pf_on = False, stim_isi_mean = 120.0, stim_isi_std = 40.0, zebrin = 'zebrin_upbound'):
     seedlist = np.arange(88, 88+ n_seeds)
 
     parent_dir = Path(parent_dir) if parent_dir is not None else Path(get_parent_dir())
@@ -243,6 +197,8 @@ def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 
         plasticity_on = True
         stim_io_on = False
         stim_pf_on = False
+        isi_std = 0.0
+        isi_mean = stim_isi_mean
 
     for seed in seedlist:
         run_fname =  f"baseline_{experiment}_plasticity_{plasticity_on}_seed{seed}_zebrin_{zebrin}simdur{simdur}.npz"
@@ -250,9 +206,9 @@ def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 
         
 
         command = (
-            f"python3 main_entrain.py --run-type baseline"
+            f"python3 main_exp.py --run-type baseline"
             f" --experiment {experiment}"
-            f" --PFPC_plasticity-on {plasticity_on}"
+            f" --PFPC-plasticity-on {plasticity_on}"
             f" --seed {seed}"
             f" --monitor-preset {monitor}"
             f" --simdur {np.float64(simdur)}"
@@ -277,7 +233,7 @@ def baseline_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 
 
 
 def train_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 50_000, dt= 0.1, ISI_values=[120], experiment = "fixed-isi", downsample = 80,
-                    tag = None, stim_isi_std = 40.0, zebrin = 'positive'):
+                    tag = None, stim_isi_std = 40.0, zebrin = 'zebrin_upbound'):
 
     seedlist = np.arange(88, 88 + n_seeds)
     ISI_values = np.atleast_1d(ISI_values)
@@ -297,17 +253,19 @@ def train_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 50_
                 stim_pf_on = True
                 isi_std = stim_isi_std
                 isi_mean = stim_isi_mean
-
+           
             elif experiment == "fixed-isi":
                 stim_io_on = True
                 stim_pf_on = True
                 isi_std = 0.0
                 isi_mean = stim_isi_mean
-
+        
             elif experiment == "nostim":
                 plasticity_on = True
                 stim_io_on = False
                 stim_pf_on = False
+                isi_std = 0.0
+                isi_mean = stim_isi_mean
 
             # Set names for path in jobs
             fin_state_fname = (f"train_{experiment}_isi{stim_isi_mean:.1f}_isi_std{stim_isi_std:.1f}_seed{seed}__zebrin_{zebrin}_simdur{simdur}_state.bp")
@@ -317,9 +275,9 @@ def train_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 50_
             run_path = results_dir / run_fname
             
             command = (
-                f"python3 main_entrain.py --run-type train"
+                f"python3 main_exp.py --run-type train"
                 f" --experiment {experiment}"
-                f" --PFPC_plasticity-on True"
+                f" --PFPC-plasticity-on True"
                 f" --seed {seed}"
                 f" --monitor-preset {monitor}"
                 f" --simdur {np.float64(simdur)}"
@@ -347,7 +305,7 @@ def train_commands(parent_dir, monitor= "plasticity_min", n_seeds=4, simdur= 50_
 
 
 def test_commands(parent_dir, monitor= "plasticity_min", state_paths=None, n_seeds=4, simdur= 50_000, dt= 0.1, ISI_values=[120], experiment = "fixed-isi", downsample = 80,
-                    tag = None, plasticity_on = True, stim_isi_std = 40.0, zebrin = 'positive'):
+                    tag = None, plasticity_on = True, stim_isi_std = 40.0, zebrin = 'zebrin_upbound'):
   
 
     # Test runs require state paths
@@ -373,33 +331,35 @@ def test_commands(parent_dir, monitor= "plasticity_min", state_paths=None, n_see
         
         for stim_isi_mean in ISI_values:
             for seed in seedlist:
-                # match main_entrain naming: test_{experiment}_{pretraining_label}_seed{seed}_simdur{simdur}.npz
+                # match main_exp naming: test_{experiment}_{pretraining_label}_seed{seed}_simdur{simdur}.npz
                 run_fname = f"test_{experiment}_{pretraining_label}_seed{seed}_simdur{np.float64(simdur)}.npz"
                 run_path = test_results_dir / run_fname
 
 
-                # Set stimulus params   
+               # Set stimulus params   
                 if experiment == "variable-isi":
                     stim_io_on = True
                     stim_pf_on = True
                     isi_std = stim_isi_std
                     isi_mean = stim_isi_mean
-    
+                
                 elif experiment == "fixed-isi":
                     stim_io_on = True
                     stim_pf_on = True
                     isi_std = 0.0
                     isi_mean = stim_isi_mean
-    
+            
                 elif experiment == "nostim":
                     plasticity_on = True
                     stim_io_on = False
                     stim_pf_on = False
+                    isi_std = 0.0
+                    isi_mean = stim_isi_mean
 
                 command = (
-                    f"python3 main_entrain.py --run-type test"
+                    f"python3 main_exp.py --run-type test"
                     f" --experiment {experiment}"
-                    f" --PFPC_plasticity-on {plasticity_on}"
+                    f" --PFPC-plasticity-on {plasticity_on}"
                     f" --seed {seed}"
                     f" --monitor-preset {monitor}"
                     f" --simdur {np.float64(simdur)}"
@@ -458,6 +418,52 @@ def parse_pretraining_label(pretraining_label):
 
     return info
 
+def get_parent_dir():
+    try:
+        return Path(__file__).resolve().parent.parent
+    except NameError:
+        return Path.cwd().parent
+    
+
+def get_connections(net):
+
+    connections_idx = {
+        "pf_pc_pre": net.pf_to_pc_BCM.pre_idx,
+        "pf_pc_post": net.pf_to_pc_BCM.post_idx,
+        "io_pc_pre": net.io_to_pc.io_source_indices,
+        "io_pc_post": net.io_to_pc.pc_target_indptr,
+    }
+
+    return connections_idx 
+
+def get_io_topography (net):
+
+    io_topography = {
+        "n_bridges": net.io.n_bridges,
+        "io_src": np.array(net.io.neurons.gj_src),
+        "io_tgt": np.array(net.io.neurons.gj_tgt),
+        "io_cluster_ids": net.io.cluster_ids,
+        "n_neurons": net.num_io}
+
+    return io_topography
+
+
+def force_net_params(net, net_params):
+    
+    net.pf_to_pc_BCM.plasticity_on.value = bm.asarray(net_params['PFPC_plasticity_on'])
+
+    net.stim.stim_io_on.value = bm.asarray(net_params['OU_stim_io_on'])
+    net.stim.stim_pf_on.value = bm.asarray(net_params['OU_stim_pf_on'])
+    net.stim.isi_mean.value = bm.asarray(net_params['OU_stim_isi_mean'])
+    net.stim.isi_std.value = bm.asarray(net_params['OU_stim_isi_std'])
+    net.stim.stim_freq = net_params['OU_stim_freq']
+
+    net.stim.dur_io = net_params['OU_stim_dur_io_mean']
+    net.stim.dur_pf= net_params['OU_stim_dur_pf_mean']
+    net.stim.amp_io = net_params['OU_stim_amp_io_mean']
+    net.stim.amp_pf = net_params['OU_stim_amp_pf_mean']
+
+    return net
 
 
 
